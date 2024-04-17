@@ -9,10 +9,18 @@ type UserDAO struct {
 	db *gorm.DB
 }
 
+func NewUserDAO(db *gorm.DB) *UserDAO {
+	return &UserDAO{
+		db: db,
+	}
+}
+
 type User struct {
-	ID         int64  `gorm:"primaryKey"`
-	Email      string `gorm:"unique"`
-	Password   string
+	ID       uint64 `gorm:"primaryKey,autoIncrement"`
+	Email    string `gorm:"unique"`
+	Password string
+
+	// 理论上unix时间应该用uint64，但是time.UnixSec()返回的是int64
 	CreateTime int64
 	UpdateTime int64
 }
