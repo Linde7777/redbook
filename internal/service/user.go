@@ -23,3 +23,15 @@ func (svc *UserService) Signup(ctx context.Context, user *domain.User) error {
 	user.Password = string(hash)
 	return svc.repo.Create(ctx, user)
 }
+
+func (svc *UserService) Login(ctx context.Context, inputUser *domain.User) (*domain.User, error) {
+	dbUser, err := svc.repo.GetUserByEmail(ctx, inputUser.Email)
+	if err != nil {
+		return nil, err
+	}
+	err = bcrypt.CompareHashAndPassword([]byte(inputUser.Password), []byte(dbUser.Password))
+	if err != nil {
+		return nil, err
+	}
+	return dbUser, nil
+}

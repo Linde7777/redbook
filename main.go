@@ -43,5 +43,4 @@ func initUserRoutes(db *gorm.DB, router *gin.Engine) {
 	us := service.NewUserService(ur)
 	uh := web.NewUserHandler(us)
 	uh.RegisterRoutes(router)
-
 }

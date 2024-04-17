@@ -28,3 +28,9 @@ type User struct {
 func (dao *UserDAO) Insert(ctx context.Context, user *User) error {
 	return dao.db.WithContext(ctx).Create(user).Error
 }
+
+func (dao *UserDAO) GetUserByEmail(ctx context.Context, email string) (*User, error) {
+	var user User
+	err := dao.db.WithContext(ctx).Where("email = ?", email).First(&user).Error
+	return &user, err
+}
