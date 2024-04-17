@@ -12,7 +12,7 @@ func main() {
 	corsConfig := cors.DefaultConfig()
 	router.Use(cors.New(corsConfig))
 
-	uh := &web.UserHandler{}
+	uh := web.NewUserHandler()
 	uh.RegisterRoutes(router)
 
 	router.Use()

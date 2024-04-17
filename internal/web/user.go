@@ -2,18 +2,27 @@ package web
 
 import (
 	"github.com/gin-gonic/gin"
+	"main/internal/domain"
+	"main/internal/service"
 	"net/http"
 )
 
 type UserHandler struct {
+	svc *service.UserService
 }
 
-func (uh *UserHandler) RegisterRoutes(e *gin.Engine) {
+func NewUserHandler(svc *service.UserService) *UserHandler {
+	return &UserHandler{
+		svc: svc,
+	}
+}
+
+func (h *UserHandler) RegisterRoutes(e *gin.Engine) {
 	ug := e.Group("/user")
-	ug.POST("/signup", uh.Signup)
+	ug.POST("/signup", h.Signup)
 }
 
-func (uh *UserHandler) Signup(c *gin.Context) {
+func (h *UserHandler) Signup(c *gin.Context) {
 	type ReqSignup struct {
 		Email           string `json:"email" binding:"required,email"`
 		Password        string `json:"password" binding:"required,min=8,max=32"`
@@ -25,4 +34,14 @@ func (uh *UserHandler) Signup(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	err := h.svc.Signup(c, &domain.User{
+		Email:    req.Email,
+		Password: req.Password,
+	})
+	if err != nil {
+		c.String(http.StatusConflict, err.Error())
+	}
+
+	c.String(http.StatusOK, "sign up success")
 }
