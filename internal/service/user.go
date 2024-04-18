@@ -28,13 +28,14 @@ func (svc *UserService) Signup(ctx context.Context, user *domain.User) (httpCode
 func (svc *UserService) Login(ctx context.Context, inputUser *domain.User) (
 	dbUser domain.User, httpCode int, err error) {
 
+	// 不暴露是否用户不存在，提高攻击者成本
 	dbUser, err = svc.repo.GetUserByEmail(ctx, inputUser.Email)
 	if err != nil {
-		return domain.User{}, http.StatusInternalServerError, err
+		return domain.User{}, http.StatusBadRequest, err
 	}
 	err = bcrypt.CompareHashAndPassword([]byte(inputUser.Password), []byte(dbUser.Password))
 	if err != nil {
-		return domain.User{}, http.StatusInternalServerError, err
+		return domain.User{}, http.StatusBadRequest, err
 	}
 	return dbUser, http.StatusOK, nil
 }

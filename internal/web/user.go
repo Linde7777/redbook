@@ -1,8 +1,6 @@
 package web
 
 import (
-	"github.com/gin-contrib/sessions"
-	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
 	"main/internal/domain"
 	"main/internal/service"
@@ -24,11 +22,6 @@ func (h *UserHandler) RegisterRoutes(e *gin.Engine) {
 	ug := e.Group("/user")
 	ug.POST("/signup", h.Signup)
 	ug.POST("/login", h.Login)
-
-	store := cookie.NewStore([]byte("secret"))
-	builder := middlewares.LoginMiddlewareBuilder{}
-	e.Use(sessions.Sessions("ssid", store), builder.CheckLogin())
-
 }
 
 func (h *UserHandler) Signup(c *gin.Context) {
@@ -58,7 +51,7 @@ func (h *UserHandler) Signup(c *gin.Context) {
 	c.String(httpCode, "sign up success")
 }
 
-const KeyUserID = "userID"
+// const KeyUserID = "userID"
 
 func (h *UserHandler) Login(c *gin.Context) {
 	type ReqLogin struct {
@@ -80,17 +73,9 @@ func (h *UserHandler) Login(c *gin.Context) {
 		c.String(httpCode, err.Error())
 	}
 
-	sess := sessions.Default(c)
-	sess.Set(KeyUserID, user.ID)
-	// todo: MaxAge从配置文件读取
-	sess.Options(sessions.Options{
-		MaxAge: 15 * 60,
-	})
-	err = sess.Save()
+	err = middlewares.SetJWT(c, user.ID)
 	if err != nil {
 		c.String(http.StatusInternalServerError, err.Error())
-		return
 	}
-
 	c.String(httpCode, "login success")
 }
