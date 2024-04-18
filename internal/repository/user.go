@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"errors"
+	"github.com/redis/go-redis/v9"
 	"main/internal/domain"
 	"main/internal/repository/cache"
 	"main/internal/repository/dao"
@@ -28,8 +30,12 @@ func (repo *UserRepository) Create(ctx context.Context, user *domain.User) (http
 
 func (repo *UserRepository) GetUserByEmail(ctx context.Context, email string) (domain.User, error) {
 	domainUser, err := repo.cache.GetUserByEmail(ctx, email)
-	if err == nil {
+	switch {
+	case err == nil:
 		return domainUser, nil
+		// todo: 缓存穿透
+	case errors.Is(err, redis.Nil):
+		break
 	}
 
 	daoUser, err := repo.dao.GetUserByEmail(ctx, email)
