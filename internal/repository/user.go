@@ -3,16 +3,19 @@ package repository
 import (
 	"context"
 	"main/internal/domain"
+	"main/internal/repository/cache"
 	"main/internal/repository/dao"
 )
 
 type UserRepository struct {
-	dao *dao.UserDAO
+	dao   *dao.UserDAO
+	cache cache.UserCache
 }
 
-func NewUserRepository(dao *dao.UserDAO) *UserRepository {
+func NewUserRepository(dao *dao.UserDAO, cache cache.UserCache) *UserRepository {
 	return &UserRepository{
-		dao: dao,
+		dao:   dao,
+		cache: cache,
 	}
 }
 
@@ -24,11 +27,19 @@ func (repo *UserRepository) Create(ctx context.Context, user *domain.User) (http
 }
 
 func (repo *UserRepository) GetUserByEmail(ctx context.Context, email string) (domain.User, error) {
+	domainUser, err := repo.cache.GetUserByEmail(ctx, email)
+	if err == nil {
+		return domainUser, nil
+	}
+
 	daoUser, err := repo.dao.GetUserByEmail(ctx, email)
 	if err != nil {
 		return domain.User{}, err
 	}
-	return toDomainUser(daoUser), nil
+	domainUser = toDomainUser(daoUser)
+	err = repo.cache.SetUserByEmail(ctx, domainUser)
+
+	return domainUser, nil
 }
 
 func toDomainUser(daoUser dao.User) domain.User {
