@@ -73,7 +73,7 @@ func (h *UserHandler) Login(c *gin.Context) {
 		c.String(httpCode, err.Error())
 	}
 
-	err = middlewares.SetJWT(c, user.ID)
+	err = middlewares.SetJWT(c, user.ID, c.GetHeader("User-Agent"))
 	if err != nil {
 		c.String(http.StatusInternalServerError, err.Error())
 	}

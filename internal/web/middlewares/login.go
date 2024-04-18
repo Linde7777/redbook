@@ -43,7 +43,7 @@ func (b *LoginMiddlewareBuilder) CheckLogin() gin.HandlerFunc {
 			return
 		}
 
-		if !validateJWT(token, claim) {
+		if !validateJWT(c, token, claim) {
 			c.AbortWithStatus(http.StatusUnauthorized)
 		}
 	}
@@ -67,18 +67,22 @@ func getTokenAndCustomClaims(c *gin.Context) (*jwt.Token, customClaims, error) {
 	return token, claims, err
 }
 
-func validateJWT(token *jwt.Token, claims customClaims) bool {
-	return token == nil || !token.Valid || claims.ExpiresAt.Before(time.Now())
+func validateJWT(c *gin.Context, token *jwt.Token, claims customClaims) bool {
+	return token != nil && token.Valid &&
+		claims.ExpiresAt.After(time.Now()) &&
+		c.GetHeader("User-Agent") == claims.UserAgent
 }
 
 type customClaims struct {
 	jwt.RegisteredClaims
-	UserID uint64 `json:"user_id"`
+	UserID    uint64
+	UserAgent string
 }
 
-func SetJWT(c *gin.Context, userID uint64) error {
+func SetJWT(c *gin.Context, userID uint64, userAgent string) error {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, customClaims{
-		UserID: userID,
+		UserID:    userID,
+		UserAgent: userAgent,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 		},
