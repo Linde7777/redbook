@@ -48,15 +48,14 @@ func (h *UserHandler) Signup(c *gin.Context) {
 		return
 	}
 
-	err := h.svc.Signup(c, &domain.User{
+	httpCode, err := h.svc.Signup(c, &domain.User{
 		Email:    req.Email,
 		Password: req.Password,
 	})
 	if err != nil {
-		c.String(http.StatusConflict, err.Error())
+		c.String(httpCode, err.Error())
 	}
-
-	c.String(http.StatusOK, "sign up success")
+	c.String(httpCode, "sign up success")
 }
 
 const KeyUserID = "userID"
@@ -73,12 +72,12 @@ func (h *UserHandler) Login(c *gin.Context) {
 		return
 	}
 
-	user, err := h.svc.Login(c, &domain.User{
+	user, httpCode, err := h.svc.Login(c, &domain.User{
 		Email:    req.Email,
 		Password: req.Password,
 	})
 	if err != nil {
-		c.String(http.StatusConflict, err.Error())
+		c.String(httpCode, err.Error())
 	}
 
 	sess := sessions.Default(c)
@@ -89,9 +88,9 @@ func (h *UserHandler) Login(c *gin.Context) {
 	})
 	err = sess.Save()
 	if err != nil {
-		c.String(http.StatusConflict, err.Error())
+		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	c.String(http.StatusOK, "login success")
+	c.String(httpCode, "login success")
 }

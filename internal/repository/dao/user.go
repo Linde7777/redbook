@@ -3,6 +3,7 @@ package dao
 import (
 	"context"
 	"gorm.io/gorm"
+	"net/http"
 )
 
 type UserDAO struct {
@@ -25,12 +26,16 @@ type User struct {
 	UpdateTime int64
 }
 
-func (dao *UserDAO) Insert(ctx context.Context, user *User) error {
-	return dao.db.WithContext(ctx).Create(user).Error
+func (dao *UserDAO) Insert(ctx context.Context, user *User) (httpCode int, err error) {
+	err = dao.db.WithContext(ctx).Create(user).Error
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+	return http.StatusOK, nil
 }
 
-func (dao *UserDAO) GetUserByEmail(ctx context.Context, email string) (*User, error) {
+func (dao *UserDAO) GetUserByEmail(ctx context.Context, email string) (User, error) {
 	var user User
 	err := dao.db.WithContext(ctx).Where("email = ?", email).First(&user).Error
-	return &user, err
+	return user, err
 }
