@@ -14,26 +14,26 @@ type UserCache interface {
 	SetUserByEmail(ctx context.Context, user domain.User) error
 }
 
-type RedisCache struct {
+type RedisUserCache struct {
 	cmd redis.Cmdable
 
 	// 大部分kv的缓存时间可以设置为相同的值
 	commonExpireDuration time.Duration
 }
 
-func (c *RedisCache) randCommonExpDuration() time.Duration {
+func (c *RedisUserCache) randCommonExpDuration() time.Duration {
 	return c.commonExpireDuration + time.Duration(rand.Int63n(int64(c.commonExpireDuration)))
 }
 
-func NewRedisCache() *RedisCache {
-	return &RedisCache{}
+func NewRedisCache() *RedisUserCache {
+	return &RedisUserCache{}
 }
 
-func (c *RedisCache) keyUserEmail(email string) string {
+func (c *RedisUserCache) keyUserEmail(email string) string {
 	return "user:email:" + email
 }
 
-func (c *RedisCache) GetUserByEmail(ctx context.Context, email string) (domain.User, error) {
+func (c *RedisUserCache) GetUserByEmail(ctx context.Context, email string) (domain.User, error) {
 	data, err := c.cmd.Get(ctx, c.keyUserEmail(email)).Bytes()
 	if err != nil {
 		return domain.User{}, err
@@ -43,7 +43,7 @@ func (c *RedisCache) GetUserByEmail(ctx context.Context, email string) (domain.U
 	return user, err
 }
 
-func (c *RedisCache) SetUserByEmail(ctx context.Context, user domain.User) error {
+func (c *RedisUserCache) SetUserByEmail(ctx context.Context, user domain.User) error {
 	data, err := json.Marshal(user)
 	if err != nil {
 		return err
