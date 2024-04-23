@@ -2,6 +2,7 @@ package dao
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"gorm.io/gorm"
 	"net/http"
@@ -19,10 +20,9 @@ func NewUserDAO(db *gorm.DB) *UserDAO {
 
 type User struct {
 	ID          uint64
-	UUID        string
-	Email       string
+	Email       sql.NullString //用手机注册的用户，刚注册时没填邮箱
 	Password    string
-	PhoneNumber string
+	PhoneNumber sql.NullString //用邮箱注册的用户，刚注册时没填手机号
 
 	// 理论上unix时间应该用uint64，但是time.UnixSec()返回的是int64
 	CreateTime int64

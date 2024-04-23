@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"github.com/redis/go-redis/v9"
 	"main/internal/domain"
@@ -62,17 +63,24 @@ func (repo *UserRepository) SearchUserByPhoneNumber(ctx context.Context,
 
 func toDomainUser(daoUser dao.User) domain.User {
 	return domain.User{
-		ID:       daoUser.ID,
-		Email:    daoUser.Email,
-		Password: daoUser.Password,
+		ID:          daoUser.ID,
+		Email:       daoUser.Email.String,
+		PhoneNumber: daoUser.PhoneNumber.String,
+		Password:    daoUser.Password,
 	}
 }
 
 func toDaoUser(domainUser domain.User) dao.User {
 	return dao.User{
-		ID:          domainUser.ID,
-		Email:       domainUser.Email,
-		Password:    domainUser.Password,
-		PhoneNumber: domainUser.PhoneNumber,
+		ID: domainUser.ID,
+		Email: sql.NullString{
+			String: domainUser.Email,
+			Valid:  domainUser.Email != "",
+		},
+		Password: domainUser.Password,
+		PhoneNumber: sql.NullString{
+			String: domainUser.PhoneNumber,
+			Valid:  domainUser.PhoneNumber != "",
+		},
 	}
 }
