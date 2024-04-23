@@ -10,6 +10,10 @@ type AuthCodeRepository struct {
 	cache cache.AuthCodeCache
 }
 
+func NewAuthCodeRepository(cache cache.AuthCodeCache) *AuthCodeRepository {
+	return &AuthCodeRepository{cache: cache}
+}
+
 func (c *AuthCodeRepository) Set(ctx context.Context, businessName, phoneNumber, authCode string) (httpCode int, err error) {
 	httpCode, err = c.cache.Set(ctx, businessName, phoneNumber, authCode)
 	if c.cache.HasExceedSendLimitError() {

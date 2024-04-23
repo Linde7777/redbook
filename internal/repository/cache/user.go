@@ -26,8 +26,11 @@ func (c *RedisUserCache) randCommonExpDuration() time.Duration {
 	return c.commonExpireDuration + time.Duration(rand.Int63n(int64(c.commonExpireDuration)))
 }
 
-func NewRedisCache() *RedisUserCache {
-	return &RedisUserCache{}
+func NewRedisUserCache(cmd redis.Cmdable, commonExpireDuration time.Duration) *RedisUserCache {
+	return &RedisUserCache{
+		cmd:                  cmd,
+		commonExpireDuration: commonExpireDuration,
+	}
 }
 
 func (c *RedisUserCache) keyUserEmail(email string) string {

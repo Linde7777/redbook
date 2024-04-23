@@ -21,11 +21,12 @@ func NewUserHandler(userService *service.UserService, authCodeService *service.A
 }
 
 func (h *UserHandler) RegisterRoutes(e *gin.Engine) {
-	group := e.Group("/user")
-	group.POST("/signup", h.Signup)
-	group.POST("/login-by-password", h.LoginByPassword)
-	group.POST("/send-login-sms-auth-code", h.SendLoginSMSAuthCode)
-	group.POST("/login-by-sms-auth-code", h.LoginBySMSAuthCode)
+	v1 := e.Group("/v1")
+	v1UserGroup := v1.Group("/user")
+	v1UserGroup.POST("/signup", h.Signup)
+	v1UserGroup.POST("/login-by-password", h.LoginByPassword)
+	v1UserGroup.POST("/send-login-sms-auth-code", h.SendLoginSMSAuthCode)
+	v1UserGroup.POST("/login-by-sms-auth-code", h.LoginBySMSAuthCode)
 }
 
 func (h *UserHandler) Signup(c *gin.Context) {

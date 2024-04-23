@@ -13,8 +13,11 @@ type AuthCodeService struct {
 	sms  sms.Service
 }
 
-func NewAuthCodeService(repo repository.AuthCodeRepository) *AuthCodeService {
-	return &AuthCodeService{repo: repo}
+func NewAuthCodeService(repo repository.AuthCodeRepository, sms sms.Service) *AuthCodeService {
+	return &AuthCodeService{
+		repo: repo,
+		sms:  sms,
+	}
 }
 
 func (svc *AuthCodeService) SendAuthCode(ctx context.Context, businessName, phoneNumber string) (httpCode int, err error) {
