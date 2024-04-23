@@ -17,18 +17,18 @@ func NewAuthCodeService(repo repository.AuthCodeRepository) *AuthCodeService {
 	return &AuthCodeService{repo: repo}
 }
 
-func (svc *AuthCodeService) SendAuthCode(ctx context.Context, businessName, phoneNumber string) error {
+func (svc *AuthCodeService) SendAuthCode(ctx context.Context, businessName, phoneNumber string) (httpCode int, err error) {
 	authCode := svc.generateAuthCode()
-	err := svc.repo.Set(ctx, businessName, phoneNumber, authCode)
+	httpCode, err = svc.repo.Set(ctx, businessName, phoneNumber, authCode)
 	if err != nil {
-		return err
+		return httpCode, err
 	}
 
 	const templateID = "todo"
 	return svc.sms.Send(ctx, templateID, []string{phoneNumber}, authCode)
 }
 
-func (svc *AuthCodeService) VerifyAuthCode(ctx context.Context, businessName, phoneNumber, authCode string) error {
+func (svc *AuthCodeService) VerifyAuthCode(ctx context.Context, businessName, phoneNumber, authCode string) (httpCode int, err error) {
 	return svc.repo.Verify(ctx, businessName, phoneNumber, authCode)
 }
 

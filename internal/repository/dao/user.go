@@ -2,6 +2,7 @@ package dao
 
 import (
 	"context"
+	"errors"
 	"gorm.io/gorm"
 	"net/http"
 )
@@ -17,9 +18,11 @@ func NewUserDAO(db *gorm.DB) *UserDAO {
 }
 
 type User struct {
-	ID       uint64 `gorm:"primaryKey,autoIncrement"`
-	Email    string `gorm:"unique"`
-	Password string
+	ID          uint64
+	UUID        string
+	Email       string
+	Password    string
+	PhoneNumber string
 
 	// 理论上unix时间应该用uint64，但是time.UnixSec()返回的是int64
 	CreateTime int64
@@ -34,8 +37,26 @@ func (dao *UserDAO) Insert(ctx context.Context, user *User) (httpCode int, err e
 	return http.StatusOK, nil
 }
 
-func (dao *UserDAO) GetUserByEmail(ctx context.Context, email string) (User, error) {
-	var user User
-	err := dao.db.WithContext(ctx).Where("email = ?", email).First(&user).Error
-	return user, err
+func (dao *UserDAO) SearchUserByEmail(ctx context.Context, email string) (user User, ok bool, httpCode int, err error) {
+	err = dao.db.WithContext(ctx).Where("email = ?", email).First(&user).Error
+	switch {
+	case err != nil && errors.Is(err, gorm.ErrRecordNotFound):
+		return user, false, http.StatusNotFound, nil
+	case err != nil:
+		return user, false, http.StatusInternalServerError, err
+	default:
+		return user, true, http.StatusOK, nil
+	}
+}
+
+func (dao *UserDAO) SearchUserByPhoneNumber(ctx context.Context, number string) (user User, ok bool, httpCode int, err error) {
+	err = dao.db.WithContext(ctx).Where("phone_number = ?", number).First(&user).Error
+	switch {
+	case err != nil && errors.Is(err, gorm.ErrRecordNotFound):
+		return user, false, http.StatusNotFound, nil
+	case err != nil:
+		return user, false, http.StatusInternalServerError, err
+	default:
+		return user, true, http.StatusOK, nil
+	}
 }

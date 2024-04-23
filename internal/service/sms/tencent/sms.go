@@ -7,6 +7,7 @@ import (
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/errors"
 	sms "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms/v20210111" // 引入sms
+	"net/http"
 )
 
 type Service struct {
@@ -68,7 +69,7 @@ func NewService(sms *sms.Client, appID, signature string) *Service {
 
 // Send 改编自 https://cloud.tencent.com/document/product/382/43199，或者谷歌“腾讯云 smsClient go”即可找到
 // args 对应模板中的参数
-func (s *Service) Send(ctx context.Context, templateID string, args []string, phones ...string) (err error) {
+func (s *Service) Send(ctx context.Context, templateID string, args []string, phones ...string) (httpCode int, err error) {
 
 	/* 实例化一个请求对象，根据调用的接口和实际情况，可以进一步设置请求参数
 	 * 您可以直接查询SDK源码确定接口有哪些属性可以设置
@@ -117,11 +118,11 @@ func (s *Service) Send(ctx context.Context, templateID string, args []string, ph
 	// 处理异常
 	if _, ok := err.(*errors.TencentCloudSDKError); ok {
 		fmt.Printf("An API error has returned: %s", err)
-		return err
+		return http.StatusInternalServerError, err
 	}
 	// 非SDK异常，直接失败。实际代码中可以加入其他的处理。
 	if err != nil {
-		return err
+		return http.StatusInternalServerError, err
 	}
 	b, _ := json.Marshal(response.Response)
 	// 打印返回的json字符串
@@ -135,5 +136,5 @@ func (s *Service) Send(ctx context.Context, templateID string, args []string, ph
 	 * 更多错误，可咨询[腾讯云助手](https://tccc.qcloud.com/web/im/index.html#/chat?webAppId=8fa15978f85cb41f7e2ea36920cb3ae1&title=Sms)
 	 */
 
-	return nil
+	return http.StatusOK, nil
 }

@@ -16,26 +16,44 @@ func NewUserService(repo *repository.UserRepository) *UserService {
 	return &UserService{repo: repo}
 }
 
-func (svc *UserService) Signup(ctx context.Context, user *domain.User) (httpCode int, err error) {
+func (svc *UserService) Signup(ctx context.Context, user *domain.User) (output domain.User, httpCode int, err error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return http.StatusServiceUnavailable, err
+		return domain.User{}, http.StatusServiceUnavailable, err
 	}
 	user.Password = string(hash)
 	return svc.repo.Create(ctx, user)
 }
 
-func (svc *UserService) Login(ctx context.Context, inputUser *domain.User) (
+func (svc *UserService) LoginByPassword(ctx context.Context, inputUser *domain.User) (
 	dbUser domain.User, httpCode int, err error) {
 
 	// 不暴露是否用户不存在，提高攻击者成本
-	dbUser, err = svc.repo.GetUserByEmail(ctx, inputUser.Email)
+	dbUser, httpCode, err = svc.repo.SearchUserByEmail(ctx, inputUser.Email)
 	if err != nil {
-		return domain.User{}, http.StatusBadRequest, err
+		return domain.User{}, httpCode, err
 	}
 	err = bcrypt.CompareHashAndPassword([]byte(inputUser.Password), []byte(dbUser.Password))
 	if err != nil {
 		return domain.User{}, http.StatusBadRequest, err
 	}
 	return dbUser, http.StatusOK, nil
+}
+
+func (svc *UserService) SearchOrCreateUserByPhoneNumber(ctx context.Context, phoneNumber string) (user domain.User, httpCode int, err error) {
+	user, ok, httpCode, err := svc.repo.SearchUserByPhoneNumber(ctx, phoneNumber)
+	switch {
+	case err != nil:
+		return domain.User{}, httpCode, err
+	case ok:
+		return user, http.StatusOK, nil
+	}
+
+	user, httpCode, err = svc.repo.Create(ctx, &domain.User{
+		PhoneNumber: phoneNumber,
+	})
+	if err != nil {
+		return domain.User{}, httpCode, err
+	}
+	return user, httpCode, nil
 }

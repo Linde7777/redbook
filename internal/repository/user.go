@@ -7,6 +7,7 @@ import (
 	"main/internal/domain"
 	"main/internal/repository/cache"
 	"main/internal/repository/dao"
+	"net/http"
 )
 
 type UserRepository struct {
@@ -21,31 +22,42 @@ func NewUserRepository(dao *dao.UserDAO, cache cache.UserCache) *UserRepository 
 	}
 }
 
-func (repo *UserRepository) Create(ctx context.Context, user *domain.User) (httpCode int, err error) {
-	return repo.dao.Insert(ctx, &dao.User{
-		Email:    user.Email,
-		Password: user.Password,
-	})
+func (repo *UserRepository) Create(ctx context.Context, inputDomainUser *domain.User) (user domain.User, httpCode int, err error) {
+	daoUser := toDaoUser(*inputDomainUser)
+	httpCode, err = repo.dao.Insert(ctx, &daoUser)
+	if err != nil {
+		return domain.User{}, httpCode, err
+	}
+	return toDomainUser(daoUser), http.StatusOK, nil
 }
 
-func (repo *UserRepository) GetUserByEmail(ctx context.Context, email string) (domain.User, error) {
-	domainUser, err := repo.cache.GetUserByEmail(ctx, email)
+func (repo *UserRepository) SearchUserByEmail(ctx context.Context, email string) (user domain.User, httpCode int, err error) {
+	domainUser, httpCode, err := repo.cache.GetUserByEmail(ctx, email)
 	switch {
 	case err == nil:
-		return domainUser, nil
+		return domainUser, httpCode, nil
 		// todo: 缓存穿透
 	case errors.Is(err, redis.Nil):
 		break
 	}
 
-	daoUser, err := repo.dao.GetUserByEmail(ctx, email)
-	if err != nil {
-		return domain.User{}, err
+	daoUser, ok, httpCode, err := repo.dao.SearchUserByEmail(ctx, email)
+	if err != nil || !ok {
+		return domain.User{}, httpCode, err
 	}
 	domainUser = toDomainUser(daoUser)
-	err = repo.cache.SetUserByEmail(ctx, domainUser)
+	httpCode, err = repo.cache.SetUserByEmail(ctx, domainUser)
+	return domainUser, httpCode, err
+}
 
-	return domainUser, nil
+func (repo *UserRepository) SearchUserByPhoneNumber(ctx context.Context,
+	phoneNumber string) (user domain.User, ok bool, httpCode int, err error) {
+
+	daoUser, ok, httpCode, err := repo.dao.SearchUserByPhoneNumber(ctx, phoneNumber)
+	if err != nil || !ok {
+		return domain.User{}, false, httpCode, err
+	}
+	return toDomainUser(daoUser), true, httpCode, nil
 }
 
 func toDomainUser(daoUser dao.User) domain.User {
@@ -53,5 +65,14 @@ func toDomainUser(daoUser dao.User) domain.User {
 		ID:       daoUser.ID,
 		Email:    daoUser.Email,
 		Password: daoUser.Password,
+	}
+}
+
+func toDaoUser(domainUser domain.User) dao.User {
+	return dao.User{
+		ID:          domainUser.ID,
+		Email:       domainUser.Email,
+		Password:    domainUser.Password,
+		PhoneNumber: domainUser.PhoneNumber,
 	}
 }

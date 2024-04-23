@@ -6,12 +6,13 @@ import (
 	"github.com/redis/go-redis/v9"
 	"main/internal/domain"
 	"math/rand"
+	"net/http"
 	"time"
 )
 
 type UserCache interface {
-	GetUserByEmail(ctx context.Context, email string) (domain.User, error)
-	SetUserByEmail(ctx context.Context, user domain.User) error
+	GetUserByEmail(ctx context.Context, email string) (user domain.User, httpCode int, err error)
+	SetUserByEmail(ctx context.Context, user domain.User) (httpCode int, err error)
 }
 
 type RedisUserCache struct {
@@ -33,20 +34,23 @@ func (c *RedisUserCache) keyUserEmail(email string) string {
 	return "user:email:" + email
 }
 
-func (c *RedisUserCache) GetUserByEmail(ctx context.Context, email string) (domain.User, error) {
+func (c *RedisUserCache) GetUserByEmail(ctx context.Context, email string) (user domain.User, httpCode int, err error) {
 	data, err := c.cmd.Get(ctx, c.keyUserEmail(email)).Bytes()
 	if err != nil {
-		return domain.User{}, err
+		return domain.User{}, http.StatusNotFound, err
 	}
-	var user domain.User
 	err = json.Unmarshal(data, &user)
-	return user, err
+	return user, http.StatusOK, err
 }
 
-func (c *RedisUserCache) SetUserByEmail(ctx context.Context, user domain.User) error {
+func (c *RedisUserCache) SetUserByEmail(ctx context.Context, user domain.User) (httpCode int, err error) {
 	data, err := json.Marshal(user)
 	if err != nil {
-		return err
+		return http.StatusBadRequest, err
 	}
-	return c.cmd.Set(ctx, c.keyUserEmail(user.Email), data, c.randCommonExpDuration()).Err()
+	err = c.cmd.Set(ctx, c.keyUserEmail(user.Email), data, c.randCommonExpDuration()).Err()
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+	return http.StatusOK, nil
 }
