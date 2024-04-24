@@ -6,7 +6,6 @@ import (
 	"go.uber.org/mock/gomock"
 	"main/internal/domain"
 	"main/internal/service"
-	servicemock "main/internal/service/mocks"
 	"main/internal/testutils"
 	"net/http"
 	"net/http/httptest"
@@ -24,7 +23,7 @@ func TestUserHandler_Signup(t *testing.T) {
 		{
 			name: "正常情况",
 			mock: func(ctrl *gomock.Controller) (service.UserService, service.AuthCodeService) {
-				userService := servicemock.NewMockUserService(ctrl)
+				userService := service.NewMockUserService(ctrl)
 				userService.EXPECT().Signup(gomock.Any(), domain.User{
 					Email:    "abc@gmail.com",
 					Password: "123456789",
@@ -33,7 +32,7 @@ func TestUserHandler_Signup(t *testing.T) {
 					Email:    "abc@gmail.com",
 					Password: testutils.GenEncryptedPassword("123456789"),
 				}, http.StatusOK, nil)
-				authCodeService := servicemock.NewMockAuthCodeService(ctrl)
+				authCodeService := service.NewMockAuthCodeService(ctrl)
 				return userService, authCodeService
 			},
 			reqBuilder: func(t *testing.T) *http.Request {
@@ -68,6 +67,25 @@ func TestUserHandler_Signup(t *testing.T) {
 			},
 			expectedHTTPCode: http.StatusBadRequest,
 			expectedResponse: "Key: 'ReqSignup.Email' Error:Field validation for 'Email' failed on the 'email' tag",
+		},
+		{
+			name: "密码长度过短",
+			mock: func(ctrl *gomock.Controller) (service.UserService, service.AuthCodeService) {
+				return nil, nil
+			},
+			reqBuilder: func(t *testing.T) *http.Request {
+				reqBodyStruct := ReqSignup{
+					Email:           "abc@gmail.com",
+					Password:        "123",
+					ConfirmPassword: "123",
+				}
+				req := httptest.NewRequest(http.MethodPost, "/v1/user/signup",
+					testutils.ReqStructToHTTPBody(reqBodyStruct))
+				req.Header.Set("Content-Type", "application/json")
+				return req
+			},
+			expectedHTTPCode: http.StatusBadRequest,
+			expectedResponse: "Key: 'ReqSignup.Password' Error:Field validation for 'Password' failed on the 'min' tag",
 		},
 	}
 
