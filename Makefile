@@ -9,7 +9,7 @@ mock:
 	#mockgen `-source=./internal/repository/authcode.go `-package=repository `-destination=./internal/repository/authcode.mock.go
 	@mockgen -source=./internal/repository/authcode.go -package=repository -destination=./internal/repository/authcode.mock.go
 
-	#mockgen `-source=./internal/repository/user.go `-package=repository `-destination=./internal/repository/mocks/user.mock.go
-	@mockgen -source=./internal/repository/user.go -package=repository -destination=./internal/repository/mocks/user.mock.go
+	#mockgen `-source=./internal/repository/user.go `-package=repository `-destination=./internal/repository/user.mock.go
+	@mockgen -source=./internal/repository/user.go -package=repository -destination=./internal/repository/user.mock.go
 
 	@go mod tidy
