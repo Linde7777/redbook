@@ -41,7 +41,7 @@ func (m *MockUserService) EXPECT() *MockUserServiceMockRecorder {
 }
 
 // LoginByPassword mocks base method.
-func (m *MockUserService) LoginByPassword(ctx context.Context, user *domain.User) (domain.User, int, error) {
+func (m *MockUserService) LoginByPassword(ctx context.Context, user domain.User) (domain.User, int, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "LoginByPassword", ctx, user)
 	ret0, _ := ret[0].(domain.User)
@@ -73,7 +73,7 @@ func (mr *MockUserServiceMockRecorder) SearchOrCreateUserByPhoneNumber(ctx, phon
 }
 
 // Signup mocks base method.
-func (m *MockUserService) Signup(ctx context.Context, user *domain.User) (domain.User, int, error) {
+func (m *MockUserService) Signup(ctx context.Context, user domain.User) (domain.User, int, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Signup", ctx, user)
 	ret0, _ := ret[0].(domain.User)

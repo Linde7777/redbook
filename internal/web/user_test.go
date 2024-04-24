@@ -25,7 +25,7 @@ func TestUserHandler_Signup(t *testing.T) {
 			name: "正常情况",
 			mock: func(ctrl *gomock.Controller) (service.UserService, service.AuthCodeService) {
 				userService := servicemock.NewMockUserService(ctrl)
-				userService.EXPECT().Signup(gomock.Any(), &domain.User{
+				userService.EXPECT().Signup(gomock.Any(), domain.User{
 					Email:    "abc@gmail.com",
 					Password: "123456789",
 				}).Return(domain.User{

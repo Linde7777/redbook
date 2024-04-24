@@ -12,7 +12,7 @@ import (
 )
 
 type UserRepository interface {
-	Create(ctx context.Context, inputDomainUser *domain.User) (user domain.User, httpCode int, err error)
+	Create(ctx context.Context, inputDomainUser domain.User) (user domain.User, httpCode int, err error)
 	SearchUserByEmail(ctx context.Context, email string) (user domain.User, httpCode int, err error)
 	SearchUserByPhoneNumber(ctx context.Context, phoneNumber string) (user domain.User, ok bool, httpCode int, err error)
 	toDomainUser(daoUser dao.User) domain.User
@@ -32,8 +32,8 @@ func NewUserRepositoryWithCache(dao dao.UserDAO, cache cache.UserCache) UserRepo
 	}
 }
 
-func (repo *UserRepositoryWithCache) Create(ctx context.Context, inputDomainUser *domain.User) (user domain.User, httpCode int, err error) {
-	daoUser := repo.toDaoUser(*inputDomainUser)
+func (repo *UserRepositoryWithCache) Create(ctx context.Context, inputDomainUser domain.User) (user domain.User, httpCode int, err error) {
+	daoUser := repo.toDaoUser(inputDomainUser)
 	httpCode, err = repo.dao.Insert(ctx, &daoUser)
 	if err != nil {
 		return domain.User{}, httpCode, err
