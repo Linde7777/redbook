@@ -25,7 +25,8 @@ type RedisAuthCodeCache struct {
 	cmd redis.Cmdable
 }
 
-func NewRedisAuthCodeCache(cmd redis.Cmdable) *RedisAuthCodeCache {
+// NewRedisAuthCodeCache 为了适配wire，只能返回接口，而不是返回具体实现
+func NewRedisAuthCodeCache(cmd redis.Cmdable) AuthCodeCache {
 	return &RedisAuthCodeCache{cmd: cmd}
 }
 

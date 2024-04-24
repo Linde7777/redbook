@@ -8,12 +8,19 @@ import (
 	"net/http"
 )
 
-type UserDAO struct {
+type UserDAO interface {
+	Insert(ctx context.Context, user *User) (httpCode int, err error)
+	SearchUserByEmail(ctx context.Context, email string) (user User, ok bool, httpCode int, err error)
+	SearchUserByPhoneNumber(ctx context.Context, number string) (user User, ok bool, httpCode int, err error)
+}
+
+type GORMUserDAO struct {
 	db *gorm.DB
 }
 
-func NewUserDAO(db *gorm.DB) *UserDAO {
-	return &UserDAO{
+// NewUserDAO 为了适配wire，只能返回接口，而不是返回具体实现
+func NewUserDAO(db *gorm.DB) UserDAO {
+	return &GORMUserDAO{
 		db: db,
 	}
 }
@@ -29,7 +36,7 @@ type User struct {
 	UpdateTime int64
 }
 
-func (dao *UserDAO) Insert(ctx context.Context, user *User) (httpCode int, err error) {
+func (dao *GORMUserDAO) Insert(ctx context.Context, user *User) (httpCode int, err error) {
 	err = dao.db.WithContext(ctx).Create(user).Error
 	if err != nil {
 		return http.StatusInternalServerError, err
@@ -37,7 +44,7 @@ func (dao *UserDAO) Insert(ctx context.Context, user *User) (httpCode int, err e
 	return http.StatusOK, nil
 }
 
-func (dao *UserDAO) SearchUserByEmail(ctx context.Context, email string) (user User, ok bool, httpCode int, err error) {
+func (dao *GORMUserDAO) SearchUserByEmail(ctx context.Context, email string) (user User, ok bool, httpCode int, err error) {
 	err = dao.db.WithContext(ctx).Where("email = ?", email).First(&user).Error
 	switch {
 	case err != nil && errors.Is(err, gorm.ErrRecordNotFound):
@@ -49,7 +56,7 @@ func (dao *UserDAO) SearchUserByEmail(ctx context.Context, email string) (user U
 	}
 }
 
-func (dao *UserDAO) SearchUserByPhoneNumber(ctx context.Context, number string) (user User, ok bool, httpCode int, err error) {
+func (dao *GORMUserDAO) SearchUserByPhoneNumber(ctx context.Context, number string) (user User, ok bool, httpCode int, err error) {
 	err = dao.db.WithContext(ctx).Where("phone_number = ?", number).First(&user).Error
 	switch {
 	case err != nil && errors.Is(err, gorm.ErrRecordNotFound):

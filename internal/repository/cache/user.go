@@ -22,15 +22,16 @@ type RedisUserCache struct {
 	commonExpireDuration time.Duration
 }
 
-func (c *RedisUserCache) randCommonExpDuration() time.Duration {
-	return c.commonExpireDuration + time.Duration(rand.Int63n(int64(c.commonExpireDuration)))
-}
-
-func NewRedisUserCache(cmd redis.Cmdable, commonExpireDuration time.Duration) *RedisUserCache {
+// NewRedisUserCache 为了适配wire，只能返回接口，而不是返回具体实现
+func NewRedisUserCache(cmd redis.Cmdable) UserCache {
 	return &RedisUserCache{
 		cmd:                  cmd,
-		commonExpireDuration: commonExpireDuration,
+		commonExpireDuration: 15 * time.Minute,
 	}
+}
+
+func (c *RedisUserCache) randCommonExpDuration() time.Duration {
+	return c.commonExpireDuration + time.Duration(rand.Int63n(int64(c.commonExpireDuration)))
 }
 
 func (c *RedisUserCache) keyUserEmail(email string) string {

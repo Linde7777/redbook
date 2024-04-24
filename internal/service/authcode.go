@@ -8,19 +8,25 @@ import (
 	"math/rand"
 )
 
-type AuthCodeService struct {
+type AuthCodeService interface {
+	SendAuthCode(ctx context.Context, businessName, phoneNumber string) (httpCode int, err error)
+	VerifyAuthCode(ctx context.Context, businessName, phoneNumber, authCode string) (httpCode int, err error)
+}
+
+type AuthCodeServiceV1 struct {
 	repo repository.AuthCodeRepository
 	sms  sms.Service
 }
 
-func NewAuthCodeService(repo repository.AuthCodeRepository, sms sms.Service) *AuthCodeService {
-	return &AuthCodeService{
+// NewAuthCodeServiceV1 为了适配wire，只能返回接口，而不是返回具体实现
+func NewAuthCodeServiceV1(repo repository.AuthCodeRepository, sms sms.Service) AuthCodeService {
+	return &AuthCodeServiceV1{
 		repo: repo,
 		sms:  sms,
 	}
 }
 
-func (svc *AuthCodeService) SendAuthCode(ctx context.Context, businessName, phoneNumber string) (httpCode int, err error) {
+func (svc *AuthCodeServiceV1) SendAuthCode(ctx context.Context, businessName, phoneNumber string) (httpCode int, err error) {
 	authCode := svc.generateAuthCode()
 	httpCode, err = svc.repo.Set(ctx, businessName, phoneNumber, authCode)
 	if err != nil {
@@ -31,11 +37,11 @@ func (svc *AuthCodeService) SendAuthCode(ctx context.Context, businessName, phon
 	return svc.sms.Send(ctx, templateID, []string{phoneNumber}, authCode)
 }
 
-func (svc *AuthCodeService) VerifyAuthCode(ctx context.Context, businessName, phoneNumber, authCode string) (httpCode int, err error) {
+func (svc *AuthCodeServiceV1) VerifyAuthCode(ctx context.Context, businessName, phoneNumber, authCode string) (httpCode int, err error) {
 	return svc.repo.Verify(ctx, businessName, phoneNumber, authCode)
 }
 
-func (svc *AuthCodeService) generateAuthCode() string {
+func (svc *AuthCodeServiceV1) generateAuthCode() string {
 	rawAuthCode := rand.Intn(1000000)
 	return fmt.Sprintf("%06d", rawAuthCode)
 }

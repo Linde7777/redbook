@@ -11,28 +11,37 @@ import (
 	"net/http"
 )
 
-type UserRepository struct {
-	dao   *dao.UserDAO
+type UserRepository interface {
+	Create(ctx context.Context, inputDomainUser *domain.User) (user domain.User, httpCode int, err error)
+	SearchUserByEmail(ctx context.Context, email string) (user domain.User, httpCode int, err error)
+	SearchUserByPhoneNumber(ctx context.Context, phoneNumber string) (user domain.User, ok bool, httpCode int, err error)
+	toDomainUser(daoUser dao.User) domain.User
+	toDaoUser(domainUser domain.User) dao.User
+}
+
+type UserRepositoryWithCache struct {
+	dao   dao.UserDAO
 	cache cache.UserCache
 }
 
-func NewUserRepository(dao *dao.UserDAO, cache cache.UserCache) *UserRepository {
-	return &UserRepository{
+// NewUserRepositoryWithCache 为了适配wire，只能返回接口，而不是返回具体实现
+func NewUserRepositoryWithCache(dao dao.UserDAO, cache cache.UserCache) UserRepository {
+	return &UserRepositoryWithCache{
 		dao:   dao,
 		cache: cache,
 	}
 }
 
-func (repo *UserRepository) Create(ctx context.Context, inputDomainUser *domain.User) (user domain.User, httpCode int, err error) {
-	daoUser := toDaoUser(*inputDomainUser)
+func (repo *UserRepositoryWithCache) Create(ctx context.Context, inputDomainUser *domain.User) (user domain.User, httpCode int, err error) {
+	daoUser := repo.toDaoUser(*inputDomainUser)
 	httpCode, err = repo.dao.Insert(ctx, &daoUser)
 	if err != nil {
 		return domain.User{}, httpCode, err
 	}
-	return toDomainUser(daoUser), http.StatusOK, nil
+	return repo.toDomainUser(daoUser), http.StatusOK, nil
 }
 
-func (repo *UserRepository) SearchUserByEmail(ctx context.Context, email string) (user domain.User, httpCode int, err error) {
+func (repo *UserRepositoryWithCache) SearchUserByEmail(ctx context.Context, email string) (user domain.User, httpCode int, err error) {
 	domainUser, httpCode, err := repo.cache.GetUserByEmail(ctx, email)
 	switch {
 	case err == nil:
@@ -46,22 +55,22 @@ func (repo *UserRepository) SearchUserByEmail(ctx context.Context, email string)
 	if err != nil || !ok {
 		return domain.User{}, httpCode, err
 	}
-	domainUser = toDomainUser(daoUser)
+	domainUser = repo.toDomainUser(daoUser)
 	httpCode, err = repo.cache.SetUserByEmail(ctx, domainUser)
 	return domainUser, httpCode, err
 }
 
-func (repo *UserRepository) SearchUserByPhoneNumber(ctx context.Context,
+func (repo *UserRepositoryWithCache) SearchUserByPhoneNumber(ctx context.Context,
 	phoneNumber string) (user domain.User, ok bool, httpCode int, err error) {
 
 	daoUser, ok, httpCode, err := repo.dao.SearchUserByPhoneNumber(ctx, phoneNumber)
 	if err != nil || !ok {
 		return domain.User{}, false, httpCode, err
 	}
-	return toDomainUser(daoUser), true, httpCode, nil
+	return repo.toDomainUser(daoUser), true, httpCode, nil
 }
 
-func toDomainUser(daoUser dao.User) domain.User {
+func (repo *UserRepositoryWithCache) toDomainUser(daoUser dao.User) domain.User {
 	return domain.User{
 		ID:          daoUser.ID,
 		Email:       daoUser.Email.String,
@@ -70,7 +79,7 @@ func toDomainUser(daoUser dao.User) domain.User {
 	}
 }
 
-func toDaoUser(domainUser domain.User) dao.User {
+func (repo *UserRepositoryWithCache) toDaoUser(domainUser domain.User) dao.User {
 	return dao.User{
 		ID: domainUser.ID,
 		Email: sql.NullString{

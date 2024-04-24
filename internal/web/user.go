@@ -8,12 +8,13 @@ import (
 	"net/http"
 )
 
+// UserHandler 仅仅是为了注册路由，不会尤其其他人调用，所以这里目前不需要接口
 type UserHandler struct {
-	userService     *service.UserService
-	authCodeService *service.AuthCodeService
+	userService     service.UserService
+	authCodeService service.AuthCodeService
 }
 
-func NewUserHandler(userService *service.UserService, authCodeService *service.AuthCodeService) *UserHandler {
+func NewUserHandler(userService service.UserService, authCodeService service.AuthCodeService) *UserHandler {
 	return &UserHandler{
 		userService:     userService,
 		authCodeService: authCodeService,
