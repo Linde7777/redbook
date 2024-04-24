@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/errors"
-	sms "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms/v20210111" // 引入sms
+	tencentSMS "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms/v20210111" // 引入sms
 	"net/http"
 )
 
 type Service struct {
-	smsClient *sms.Client
+	smsClient *tencentSMS.Client
 	appID     *string
 	signName  *string
 }
@@ -49,8 +49,8 @@ type Service struct {
 //   - 如有需要请在代码中查阅以获取最新的默认值 */
 //     // cpf.HttpProfile.ReqTimeout = 5
 //
-//     /* 指定接入地域域名，默认就近地域接入域名为 sms.tencentcloudapi.com ，也支持指定地域域名访问，例如广州地域的域名为 sms.ap-guangzhou.tencentcloudapi.com */
-//     cpf.HttpProfile.Endpoint = "sms.tencentcloudapi.com"
+//     /* 指定接入地域域名，默认就近地域接入域名为 tencentSMS.tencentcloudapi.com ，也支持指定地域域名访问，例如广州地域的域名为 tencentSMS.ap-guangzhou.tencentcloudapi.com */
+//     cpf.HttpProfile.Endpoint = "tencentSMS.tencentcloudapi.com"
 //
 //     /* SDK默认用TC3-HMAC-SHA256进行签名，非必要请不要修改这个字段 */
 //     cpf.SignMethod = "HmacSHA1"
@@ -58,8 +58,8 @@ type Service struct {
 //     /* 实例化要请求产品(以sms为例)的client对象
 //
 //   - 第二个参数是地域信息，可以直接填写字符串ap-guangzhou，支持的地域列表参考 https://cloud.tencent.com/document/api/382/52071#.E5.9C.B0.E5.9F.9F.E5.88.97.E8.A1.A8 */
-//     client, _ := sms.NewClient(credential, "ap-guangzhou", cpf)
-func NewService(sms *sms.Client, appID, signature string) *Service {
+//     client, _ := tencentSMS.NewClient(credential, "ap-guangzhou", cpf)
+func NewService(sms *tencentSMS.Client, appID, signature string) *Service {
 	return &Service{
 		smsClient: sms,
 		appID:     &appID,
@@ -75,7 +75,7 @@ func (s *Service) Send(ctx context.Context, templateID string, args []string, ph
 	 * 您可以直接查询SDK源码确定接口有哪些属性可以设置
 	 * 属性可能是基本类型，也可能引用了另一个数据结构
 	 * 推荐使用IDE进行开发，可以方便的跳转查阅各个接口和数据结构的文档说明 */
-	request := sms.NewSendSmsRequest()
+	request := tencentSMS.NewSendSmsRequest()
 	request.SetContext(ctx)
 
 	/* 基本类型的设置:
