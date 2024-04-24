@@ -46,7 +46,7 @@ func (h *UserHandler) Signup(c *gin.Context) {
 		return
 	}
 
-	_, httpCode, err := h.userService.Signup(c, &domain.User{
+	_, httpCode, err := h.userService.Signup(c, domain.User{
 		Email:    req.Email,
 		Password: req.Password,
 	})
@@ -70,7 +70,7 @@ func (h *UserHandler) LoginByPassword(c *gin.Context) {
 		return
 	}
 
-	user, httpCode, err := h.userService.LoginByPassword(c, &domain.User{
+	user, httpCode, err := h.userService.LoginByPassword(c, domain.User{
 		Email:    req.Email,
 		Password: req.Password,
 	})
