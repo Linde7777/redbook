@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"database/sql"
+	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"main/internal/domain"
@@ -36,31 +38,37 @@ func TestUserRepositoryWithCache_SearchUserByEmail(t *testing.T) {
 			},
 			expectedHTTPCode: http.StatusOK,
 		},
-		//{
-		//	name: "缓存没数据，数据库有数据",
-		//	mock: func(ctrl *gomock.Controller) (cache.UserCache, dao.UserDAO) {
-		//		mockCache := cache.NewMockUserCache(ctrl)
-		//		mockCache.EXPECT().GetUserByEmail(gomock.Any(), "abc@gmail.com").
-		//			Return(domain.User{}, http.StatusNotFound, redis.Nil)
-		//
-		//		mockDAO := dao.NewMockUserDAO(ctrl)
-		//		mockDAO.EXPECT().SearchUserByEmail(gomock.Any(), "abc@gmail.com").
-		//			Return(dao.User{
-		//				ID: 1,
-		//				Email: sql.NullString{
-		//					String: "abc@gmail.com",
-		//					Valid:  true,
-		//				},
-		//			}, true, http.StatusOK, nil)
-		//		return mockCache, mockDAO
-		//	},
-		//	inputEmail: "abc@gmail.com",
-		//	expectedUser: domain.User{
-		//		ID:    1,
-		//		Email: "abc@gmail.com",
-		//	},
-		//	expectedHTTPCode: http.StatusOK,
-		//},
+		{
+			name: "缓存没数据，数据库有数据",
+			mock: func(ctrl *gomock.Controller) (cache.UserCache, dao.UserDAO) {
+				mockCache := cache.NewMockUserCache(ctrl)
+				mockCache.EXPECT().GetUserByEmail(gomock.Any(), "abc@gmail.com").
+					Return(domain.User{}, http.StatusNotFound, redis.Nil)
+
+				mockDAO := dao.NewMockUserDAO(ctrl)
+				mockDAO.EXPECT().SearchUserByEmail(gomock.Any(), "abc@gmail.com").
+					Return(dao.User{
+						ID: 1,
+						Email: sql.NullString{
+							String: "abc@gmail.com",
+							Valid:  true,
+						},
+					}, true, http.StatusOK, nil)
+
+				mockCache.EXPECT().SetUserByEmail(gomock.Any(), domain.User{
+					ID:    1,
+					Email: "abc@gmail.com",
+				}).Return(http.StatusOK, nil)
+
+				return mockCache, mockDAO
+			},
+			inputEmail: "abc@gmail.com",
+			expectedUser: domain.User{
+				ID:    1,
+				Email: "abc@gmail.com",
+			},
+			expectedHTTPCode: http.StatusOK,
+		},
 	}
 
 	for _, tc := range testCases {
