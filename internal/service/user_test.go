@@ -41,7 +41,7 @@ func TestUserServiceV1_LoginByPassword(t *testing.T) {
 						Password: "$2a$10$T/ec6oBgBg4nBZeHUUjA9u5I/5/16U9zBDIUG15aEXKmv61HJtAPy",
 
 						PhoneNumber: "13332999999",
-					}, http.StatusOK, nil)
+					}, true, http.StatusOK, nil)
 				return repo
 			},
 			ctx:      nil,
