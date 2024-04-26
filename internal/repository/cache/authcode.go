@@ -31,7 +31,7 @@ func NewRedisAuthCodeCache(cmd redis.Cmdable) AuthCodeCache {
 }
 
 func (c *RedisAuthCodeCache) key(businessName, phoneNumber string) string {
-	return "authcode:" + businessName + ":" + phoneNumber
+	return fmt.Sprintf("authcode:%s:%s", businessName, phoneNumber)
 }
 
 var errSentinel error

@@ -22,3 +22,11 @@ func ReqStructToHTTPBody(reqStruct any) *bytes.Reader {
 	reqBody := bytes.NewReader(reqBodyBytes)
 	return reqBody
 }
+
+func StructToString(inputStruct any) string {
+	inputStructBytes, err := json.Marshal(inputStruct)
+	if err != nil {
+		panic(err)
+	}
+	return string(inputStructBytes)
+}
