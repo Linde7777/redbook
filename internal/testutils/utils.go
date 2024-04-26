@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"golang.org/x/crypto/bcrypt"
+	"net/http"
 )
 
 func GenEncryptedPassword(password string) string {
@@ -14,7 +15,17 @@ func GenEncryptedPassword(password string) string {
 	return string(hash)
 }
 
-func ReqStructToHTTPBody(reqStruct any) *bytes.Reader {
+func GenHTTPJSONReq(method, url string, reqStruct any) *http.Request {
+	req, err := http.NewRequest("POST", "/v1/user/send-login-sms-auth-code",
+		structToHTTPBody(reqStruct))
+	if err != nil {
+		panic(err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	return req
+}
+
+func structToHTTPBody(reqStruct any) *bytes.Reader {
 	reqBodyBytes, err := json.Marshal(reqStruct)
 	if err != nil {
 		panic(err)
@@ -29,4 +40,11 @@ func StructToString(inputStruct any) string {
 		panic(err)
 	}
 	return string(inputStructBytes)
+}
+
+func StringToStruct(inputString string, outputStruct any) {
+	err := json.Unmarshal([]byte(inputString), outputStruct)
+	if err != nil {
+		panic(err)
+	}
 }

@@ -41,10 +41,7 @@ func TestUserHandler_Signup(t *testing.T) {
 					Password:        "123456789",
 					ConfirmPassword: "123456789",
 				}
-				req := httptest.NewRequest(http.MethodPost, "/v1/user/signup",
-					testutils.ReqStructToHTTPBody(reqBodyStruct))
-				req.Header.Set("Content-Type", "application/json")
-				return req
+				return testutils.GenHTTPJSONReq("POST", "/v1/user/signup", reqBodyStruct)
 			},
 			expectedHTTPCode: http.StatusOK,
 			expectedResponse: "signup success",
@@ -60,10 +57,7 @@ func TestUserHandler_Signup(t *testing.T) {
 					Password:        "123456789",
 					ConfirmPassword: "123456789",
 				}
-				req := httptest.NewRequest(http.MethodPost, "/v1/user/signup",
-					testutils.ReqStructToHTTPBody(reqBodyStruct))
-				req.Header.Set("Content-Type", "application/json")
-				return req
+				return testutils.GenHTTPJSONReq("POST", "/v1/user/signup", reqBodyStruct)
 			},
 			expectedHTTPCode: http.StatusBadRequest,
 			expectedResponse: "Key: 'ReqSignup.Email' Error:Field validation for 'Email' failed on the 'email' tag",
@@ -79,10 +73,7 @@ func TestUserHandler_Signup(t *testing.T) {
 					Password:        "123",
 					ConfirmPassword: "123",
 				}
-				req := httptest.NewRequest(http.MethodPost, "/v1/user/signup",
-					testutils.ReqStructToHTTPBody(reqBodyStruct))
-				req.Header.Set("Content-Type", "application/json")
-				return req
+				return testutils.GenHTTPJSONReq("POST", "/v1/user/signup", reqBodyStruct)
 			},
 			expectedHTTPCode: http.StatusBadRequest,
 			expectedResponse: "Key: 'ReqSignup.Password' Error:Field validation for 'Password' failed on the 'min' tag",

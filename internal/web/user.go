@@ -85,12 +85,12 @@ func (h *UserHandler) LoginByPassword(c *gin.Context) {
 	c.String(httpCode, "login success")
 }
 
-func (h *UserHandler) SendLoginSMSAuthCode(c *gin.Context) {
-	type ReqSendLoginSMSAuthCode struct {
-		// 关于tag e164: https://github.com/go-playground/validator#:~:text=Datetime-,e164,-e164%20formatted%20phone
-		PhoneNumber string `json:"phone_number" binding:"required,e164"`
-	}
+type ReqSendLoginSMSAuthCode struct {
+	// 关于tag e164: https://github.com/go-playground/validator#:~:text=Datetime-,e164,-e164%20formatted%20phone
+	PhoneNumber string `json:"phone_number" binding:"required,e164"`
+}
 
+func (h *UserHandler) SendLoginSMSAuthCode(c *gin.Context) {
 	var req ReqSendLoginSMSAuthCode
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.String(http.StatusBadRequest, err.Error())

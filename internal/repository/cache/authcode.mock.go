@@ -53,6 +53,20 @@ func (mr *MockAuthCodeCacheMockRecorder) HasExceedSendLimitError() *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasExceedSendLimitError", reflect.TypeOf((*MockAuthCodeCache)(nil).HasExceedSendLimitError))
 }
 
+// Key mocks base method.
+func (m *MockAuthCodeCache) Key(businessName, phoneNumber string) string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Key", businessName, phoneNumber)
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// Key indicates an expected call of Key.
+func (mr *MockAuthCodeCacheMockRecorder) Key(businessName, phoneNumber any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Key", reflect.TypeOf((*MockAuthCodeCache)(nil).Key), businessName, phoneNumber)
+}
+
 // Set mocks base method.
 func (m *MockAuthCodeCache) Set(ctx context.Context, businessName, phoneNumber, authCode string) (int, error) {
 	m.ctrl.T.Helper()

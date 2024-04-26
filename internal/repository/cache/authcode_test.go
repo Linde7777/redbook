@@ -34,7 +34,7 @@ func TestRedisAuthCodeCache_Set(t *testing.T) {
 
 				// 一开始是用 mockCmd.SetVal(0)，报错redis: unexpected type=int for Int，
 				// 原本的业务代码是这么调用的：
-				// res, err := c.cmd.Eval(ctx, luaSetCode, []string{c.key(businessName, phoneNumber)}, authCode).Int()
+				// res, err := c.cmd.Eval(ctx, luaSetCode, []string{c.Key(businessName, phoneNumber)}, authCode).Int()
 				// err就是从Int()方法里面来的，点进去看，发现需要返回int64
 				mockCmd.SetVal(int64(0))
 

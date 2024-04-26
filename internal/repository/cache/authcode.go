@@ -19,6 +19,7 @@ type AuthCodeCache interface {
 	Set(ctx context.Context, businessName, phoneNumber, authCode string) (httpCode int, err error)
 	Verify(ctx context.Context, businessName, phoneNumber, authCode string) (httpCode int, err error)
 	HasExceedSendLimitError() bool
+	Key(businessName, phoneNumber string) string
 }
 
 type RedisAuthCodeCache struct {
@@ -30,7 +31,7 @@ func NewRedisAuthCodeCache(cmd redis.Cmdable) AuthCodeCache {
 	return &RedisAuthCodeCache{cmd: cmd}
 }
 
-func (c *RedisAuthCodeCache) key(businessName, phoneNumber string) string {
+func (c *RedisAuthCodeCache) Key(businessName, phoneNumber string) string {
 	return fmt.Sprintf("authcode:%s:%s", businessName, phoneNumber)
 }
 
@@ -46,7 +47,7 @@ func (c *RedisAuthCodeCache) HasExceedSendLimitError() bool {
 // 正常用户受到前端限制，不可能在一分钟内请求发送多次验证码，
 // 我们需要对攻击者隐藏这个错误，增加攻击者成本
 func (c *RedisAuthCodeCache) Set(ctx context.Context, businessName, phoneNumber, authCode string) (httpCode int, err error) {
-	res, err := c.cmd.Eval(ctx, luaSetCode, []string{c.key(businessName, phoneNumber)}, authCode).Int()
+	res, err := c.cmd.Eval(ctx, luaSetCode, []string{c.Key(businessName, phoneNumber)}, authCode).Int()
 	if err != nil {
 		return http.StatusInternalServerError, err
 	}
@@ -64,7 +65,7 @@ func (c *RedisAuthCodeCache) Set(ctx context.Context, businessName, phoneNumber,
 }
 
 func (c *RedisAuthCodeCache) Verify(ctx context.Context, businessName, phoneNumber, authCode string) (httpCode int, err error) {
-	res, err := c.cmd.Eval(ctx, luaVerifyCode, []string{c.key(businessName, phoneNumber)}, authCode).Int()
+	res, err := c.cmd.Eval(ctx, luaVerifyCode, []string{c.Key(businessName, phoneNumber)}, authCode).Int()
 	if err != nil {
 		return http.StatusInternalServerError, err
 	}
