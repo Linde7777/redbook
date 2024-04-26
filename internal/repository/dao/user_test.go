@@ -69,7 +69,7 @@ func TestGORMUserDAO_Insert(t *testing.T) {
 				SkipDefaultTransaction: true,
 			})
 			assert.NoError(t, err)
-			mockDAO := NewUserDAO(db)
+			mockDAO := NewGORMUserDAO(db)
 			httpCode, err := mockDAO.Insert(tc.ctx, tc.inputUser)
 			assert.Equal(t, tc.expectedHTTPCode, httpCode)
 			assert.Equal(t, tc.expectedErr, err)

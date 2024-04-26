@@ -9,6 +9,7 @@ import (
 	"main/internal/repository/cache"
 	"main/internal/repository/dao"
 	"net/http"
+	"sync"
 )
 
 type UserRepository interface {
@@ -24,14 +25,20 @@ type UserRepositoryWithCache struct {
 	cache cache.UserCache
 }
 
+var userRepoWithCacheOnce sync.Once
+var userRepoWithCache *UserRepositoryWithCache
+
 var _ UserRepository = (*UserRepositoryWithCache)(nil)
 
 // NewUserRepositoryWithCache 为了适配wire，只能返回接口，而不是返回具体实现
 func NewUserRepositoryWithCache(dao dao.UserDAO, cache cache.UserCache) UserRepository {
-	return &UserRepositoryWithCache{
-		dao:   dao,
-		cache: cache,
-	}
+	userRepoWithCacheOnce.Do(func() {
+		userRepoWithCache = &UserRepositoryWithCache{
+			dao:   dao,
+			cache: cache,
+		}
+	})
+	return userRepoWithCache
 }
 
 func (repo *UserRepositoryWithCache) Create(ctx context.Context, inputDomainUser domain.User) (user domain.User, httpCode int, err error) {

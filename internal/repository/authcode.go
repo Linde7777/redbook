@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"main/internal/repository/cache"
+	"sync"
 )
 
 type AuthCodeRepository interface {
@@ -15,9 +16,20 @@ type AuthCodeRepositoryWithCache struct {
 	cache cache.AuthCodeCache
 }
 
+var (
+	authCodeRepoWithCacheOnce sync.Once
+	authCodeRepoWithCache     *AuthCodeRepositoryWithCache
+	_                         AuthCodeRepository = (*AuthCodeRepositoryWithCache)(nil)
+)
+
 // NewAuthCodeRepositoryWithCache 为了适配wire，只能返回接口，而不是返回具体实现
 func NewAuthCodeRepositoryWithCache(cache cache.AuthCodeCache) AuthCodeRepository {
-	return &AuthCodeRepositoryWithCache{cache: cache}
+	authCodeRepoWithCacheOnce.Do(func() {
+		authCodeRepoWithCache = &AuthCodeRepositoryWithCache{
+			cache: cache,
+		}
+	})
+	return authCodeRepoWithCache
 }
 
 func (c *AuthCodeRepositoryWithCache) Set(ctx context.Context, businessName, phoneNumber, authCode string) (httpCode int, err error) {

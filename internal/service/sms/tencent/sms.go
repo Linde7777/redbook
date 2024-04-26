@@ -10,7 +10,7 @@ import (
 	"net/http"
 )
 
-type Service struct {
+type SMSService struct {
 	smsClient *tencentSMS.Client
 	appID     *string
 	signName  *string
@@ -59,8 +59,8 @@ type Service struct {
 //
 //   - 第二个参数是地域信息，可以直接填写字符串ap-guangzhou，支持的地域列表参考 https://cloud.tencent.com/document/api/382/52071#.E5.9C.B0.E5.9F.9F.E5.88.97.E8.A1.A8 */
 //     client, _ := tencentSMS.NewClient(credential, "ap-guangzhou", cpf)
-func NewService(sms *tencentSMS.Client, appID, signature string) *Service {
-	return &Service{
+func NewService(sms *tencentSMS.Client, appID, signature string) *SMSService {
+	return &SMSService{
 		smsClient: sms,
 		appID:     &appID,
 		signName:  &signature,
@@ -69,7 +69,7 @@ func NewService(sms *tencentSMS.Client, appID, signature string) *Service {
 
 // Send 改编自 https://cloud.tencent.com/document/product/382/43199，或者谷歌“腾讯云 smsClient go”即可找到
 // args 对应模板中的参数
-func (s *Service) Send(ctx context.Context, templateID string, args []string, phones ...string) (httpCode int, err error) {
+func (s *SMSService) Send(ctx context.Context, templateID string, args []string, phones ...string) (httpCode int, err error) {
 
 	/* 实例化一个请求对象，根据调用的接口和实际情况，可以进一步设置请求参数
 	 * 您可以直接查询SDK源码确定接口有哪些属性可以设置

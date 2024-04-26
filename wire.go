@@ -13,13 +13,20 @@ import (
 	"main/ioc"
 )
 
+var providerSet wire.ProviderSet = wire.NewSet(
+	ioc.InitDB, ioc.InitRedis,
+	dao.NewGORMUserDAO,
+
+	wire.Bind(new(dao.UserDAO), new(*dao.GORMUserDAO)))
+
 func InitWebServer() *gin.Engine {
 	wire.Build(ioc.InitDB, ioc.InitRedis,
-		dao.NewUserDAO,
+		dao.NewGORMUserDAO,
 		cache.NewRedisUserCache, cache.NewRedisAuthCodeCache,
 		repository.NewUserRepositoryWithCache, repository.NewAuthCodeRepositoryWithCache,
-		ioc.InitSMSService, service.NewUserServiceV1, service.NewAuthCodeServiceV1,
+		ioc.InitTencentSMSService, service.NewUserServiceV1, service.NewAuthCodeServiceV1,
 		web.NewUserHandler,
 		ioc.InitGinMiddlewares, ioc.InitGinWebServer)
+	//wire.Build(providerSet)
 	return gin.Default()
 }

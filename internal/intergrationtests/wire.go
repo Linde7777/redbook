@@ -33,10 +33,10 @@ func InitRedis() redis.Cmdable {
 
 func InitWebServer() *gin.Engine {
 	wire.Build(InitDB, InitRedis,
-		dao.NewUserDAO,
+		dao.NewGORMUserDAO,
 		cache.NewRedisUserCache, cache.NewRedisAuthCodeCache,
 		repository.NewUserRepositoryWithCache, repository.NewAuthCodeRepositoryWithCache,
-		ioc.InitSMSService, service.NewUserServiceV1, service.NewAuthCodeServiceV1,
+		ioc.InitTencentSMSService, service.NewUserServiceV1, service.NewAuthCodeServiceV1,
 		web.NewUserHandler,
 		ioc.InitGinMiddlewares, ioc.InitGinWebServer)
 	return gin.Default()

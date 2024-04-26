@@ -7,6 +7,7 @@ import (
 	"main/internal/domain"
 	"math/rand"
 	"net/http"
+	"sync"
 	"time"
 )
 
@@ -14,6 +15,9 @@ type UserCache interface {
 	GetUserByEmail(ctx context.Context, email string) (user domain.User, httpCode int, err error)
 	SetUserByEmail(ctx context.Context, user domain.User) (httpCode int, err error)
 }
+
+var redisUserCacheOnce sync.Once
+var redisUserCache *RedisUserCache
 
 type RedisUserCache struct {
 	cmd redis.Cmdable
@@ -23,11 +27,14 @@ type RedisUserCache struct {
 }
 
 // NewRedisUserCache 为了适配wire，只能返回接口，而不是返回具体实现
-func NewRedisUserCache(cmd redis.Cmdable) UserCache {
-	return &RedisUserCache{
-		cmd:                  cmd,
-		commonExpireDuration: 15 * time.Minute,
-	}
+func NewRedisUserCache(cmd redis.Cmdable) *RedisUserCache {
+	redisUserCacheOnce.Do(func() {
+		redisUserCache = &RedisUserCache{
+			cmd:                  cmd,
+			commonExpireDuration: 15 * time.Minute,
+		}
+	})
+	return redisUserCache
 }
 
 func (c *RedisUserCache) randCommonExpDuration() time.Duration {

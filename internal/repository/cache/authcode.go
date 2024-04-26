@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/redis/go-redis/v9"
 	"net/http"
+	"sync"
 )
 
 //go:embed lua/set_auth_code.lua
@@ -22,13 +23,21 @@ type AuthCodeCache interface {
 	Key(businessName, phoneNumber string) string
 }
 
+var redisAuthCodeCacheOnce sync.Once
+var redisAuthCodeCache *RedisAuthCodeCache
+
 type RedisAuthCodeCache struct {
 	cmd redis.Cmdable
 }
 
 // NewRedisAuthCodeCache 为了适配wire，只能返回接口，而不是返回具体实现
-func NewRedisAuthCodeCache(cmd redis.Cmdable) AuthCodeCache {
-	return &RedisAuthCodeCache{cmd: cmd}
+func NewRedisAuthCodeCache(cmd redis.Cmdable) *RedisAuthCodeCache {
+	redisAuthCodeCacheOnce.Do(func() {
+		redisAuthCodeCache = &RedisAuthCodeCache{
+			cmd: cmd,
+		}
+	})
+	return redisAuthCodeCache
 }
 
 func (c *RedisAuthCodeCache) Key(businessName, phoneNumber string) string {

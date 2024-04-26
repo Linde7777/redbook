@@ -6,6 +6,7 @@ import (
 	"errors"
 	"gorm.io/gorm"
 	"net/http"
+	"sync"
 )
 
 type UserDAO interface {
@@ -14,15 +15,21 @@ type UserDAO interface {
 	SearchUserByPhoneNumber(ctx context.Context, number string) (user User, ok bool, httpCode int, err error)
 }
 
+var once sync.Once
+var gormUserDAO *GORMUserDAO
+
 type GORMUserDAO struct {
 	db *gorm.DB
 }
 
-// NewUserDAO 为了适配wire，只能返回接口，而不是返回具体实现
-func NewUserDAO(db *gorm.DB) UserDAO {
-	return &GORMUserDAO{
-		db: db,
-	}
+// NewGORMUserDAO 为了适配wire，只能返回接口，而不是返回具体实现
+func NewGORMUserDAO(db *gorm.DB) *GORMUserDAO {
+	once.Do(func() {
+		gormUserDAO = &GORMUserDAO{
+			db: db,
+		}
+	})
+	return gormUserDAO
 }
 
 type User struct {

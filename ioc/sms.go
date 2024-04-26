@@ -3,13 +3,16 @@ package ioc
 import (
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/profile"
-	"main/internal/service/sms"
 	"main/internal/service/sms/tencent"
 
 	tencentSMS "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms/v20210111"
 )
 
-func InitSMSService() sms.Service {
+var (
+	smsService *tencent.SMSService
+)
+
+func InitTencentSMSService() *tencent.SMSService {
 	// SecretId、SecretKey 查询: https://console.cloud.tencent.com/cam/capi */
 	credential := common.NewCredential(
 		// os.Getenv("TENCENTCLOUD_SECRET_ID"),
