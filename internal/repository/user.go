@@ -13,7 +13,7 @@ import (
 
 type UserRepository interface {
 	Create(ctx context.Context, inputDomainUser domain.User) (user domain.User, httpCode int, err error)
-	SearchUserByEmail(ctx context.Context, email string) (user domain.User, httpCode int, err error)
+	SearchUserByEmail(ctx context.Context, email string) (user domain.User, ok bool, httpCode int, err error)
 	SearchUserByPhoneNumber(ctx context.Context, phoneNumber string) (user domain.User, ok bool, httpCode int, err error)
 	toDomainUser(daoUser dao.User) domain.User
 	toDaoUser(domainUser domain.User) dao.User
@@ -23,6 +23,8 @@ type UserRepositoryWithCache struct {
 	dao   dao.UserDAO
 	cache cache.UserCache
 }
+
+var _ UserRepository = (*UserRepositoryWithCache)(nil)
 
 // NewUserRepositoryWithCache 为了适配wire，只能返回接口，而不是返回具体实现
 func NewUserRepositoryWithCache(dao dao.UserDAO, cache cache.UserCache) UserRepository {
@@ -41,11 +43,11 @@ func (repo *UserRepositoryWithCache) Create(ctx context.Context, inputDomainUser
 	return repo.toDomainUser(daoUser), http.StatusOK, nil
 }
 
-func (repo *UserRepositoryWithCache) SearchUserByEmail(ctx context.Context, email string) (user domain.User, httpCode int, err error) {
+func (repo *UserRepositoryWithCache) SearchUserByEmail(ctx context.Context, email string) (user domain.User, ok bool, httpCode int, err error) {
 	domainUser, httpCode, err := repo.cache.GetUserByEmail(ctx, email)
 	switch {
 	case err == nil:
-		return domainUser, httpCode, nil
+		return domainUser, true, httpCode, nil
 		// todo: 缓存穿透
 	case errors.Is(err, redis.Nil):
 		break
@@ -53,11 +55,11 @@ func (repo *UserRepositoryWithCache) SearchUserByEmail(ctx context.Context, emai
 
 	daoUser, ok, httpCode, err := repo.dao.SearchUserByEmail(ctx, email)
 	if err != nil || !ok {
-		return domain.User{}, httpCode, err
+		return domain.User{}, false, httpCode, err
 	}
 	domainUser = repo.toDomainUser(daoUser)
 	httpCode, err = repo.cache.SetUserByEmail(ctx, domainUser)
-	return domainUser, httpCode, err
+	return domainUser, true, httpCode, err
 }
 
 func (repo *UserRepositoryWithCache) SearchUserByPhoneNumber(ctx context.Context,

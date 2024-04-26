@@ -36,8 +36,8 @@ func (svc *UserServiceV1) LoginByPassword(ctx context.Context, inputUser domain.
 	outputUser domain.User, httpCode int, err error) {
 
 	// 不暴露是否用户不存在，提高攻击者成本
-	outputUser, httpCode, err = svc.repo.SearchUserByEmail(ctx, inputUser.Email)
-	if err != nil {
+	outputUser, ok, httpCode, err := svc.repo.SearchUserByEmail(ctx, inputUser.Email)
+	if err != nil || !ok {
 		return domain.User{}, httpCode, err
 	}
 	err = bcrypt.CompareHashAndPassword([]byte(outputUser.Password), []byte(inputUser.Password))

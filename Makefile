@@ -19,6 +19,6 @@ mock:
 	@mockgen -source=./internal/repository/cache/authcode.go -package=cache -destination=./internal/repository/cache/authcode.go
 
 	# mockgen `-source=./internal/repository/dao/user.go `-package=dao `-destination=./internal/repository/dao/user.mock.go
-	@mockgen -source=./internal/repository/dao/user.go -package=dao -destination=./internal/repository/dao/user.go
+	@mockgen -source=./internal/repository/dao/user.go -package=dao -destination=./internal/repository/dao/user.mock.go
 
 	@go mod tidy

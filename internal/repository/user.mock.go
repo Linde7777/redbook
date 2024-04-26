@@ -58,13 +58,14 @@ func (mr *MockUserRepositoryMockRecorder) Create(ctx, inputDomainUser any) *gomo
 }
 
 // SearchUserByEmail mocks base method.
-func (m *MockUserRepository) SearchUserByEmail(ctx context.Context, email string) (domain.User, int, error) {
+func (m *MockUserRepository) SearchUserByEmail(ctx context.Context, email string) (domain.User, bool, int, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SearchUserByEmail", ctx, email)
 	ret0, _ := ret[0].(domain.User)
-	ret1, _ := ret[1].(int)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
+	ret1, _ := ret[1].(bool)
+	ret2, _ := ret[2].(int)
+	ret3, _ := ret[3].(error)
+	return ret0, ret1, ret2, ret3
 }
 
 // SearchUserByEmail indicates an expected call of SearchUserByEmail.
