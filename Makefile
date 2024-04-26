@@ -12,4 +12,13 @@ mock:
 	#mockgen `-source=./internal/repository/user.go `-package=repository `-destination=./internal/repository/user.mock.go
 	@mockgen -source=./internal/repository/user.go -package=repository -destination=./internal/repository/user.mock.go
 
+	# mockgen `-source=./internal/repository/cache/user.go `-package=cache `-destination=./internal/repository/cache/user.mock.go
+	@mockgen -source=./internal/repository/cache/user.go -package=cache -destination=./internal/repository/cache/user.mock.go
+
+	# mockgen `-source=./internal/repository/cache/authcode.go `-package=cache `-destination=./internal/repository/cache/authcode.mock.go
+	@mockgen -source=./internal/repository/cache/authcode.go -package=cache -destination=./internal/repository/cache/authcode.go
+
+	# mockgen `-source=./internal/repository/dao/user.go `-package=dao `-destination=./internal/repository/dao/user.mock.go
+	@mockgen -source=./internal/repository/dao/user.go -package=dao -destination=./internal/repository/dao/user.go
+
 	@go mod tidy
