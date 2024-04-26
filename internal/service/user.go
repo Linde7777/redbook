@@ -33,18 +33,18 @@ func (svc *UserServiceV1) Signup(ctx context.Context, user domain.User) (output 
 }
 
 func (svc *UserServiceV1) LoginByPassword(ctx context.Context, inputUser domain.User) (
-	dbUser domain.User, httpCode int, err error) {
+	outputUser domain.User, httpCode int, err error) {
 
 	// 不暴露是否用户不存在，提高攻击者成本
-	dbUser, httpCode, err = svc.repo.SearchUserByEmail(ctx, inputUser.Email)
+	outputUser, httpCode, err = svc.repo.SearchUserByEmail(ctx, inputUser.Email)
 	if err != nil {
 		return domain.User{}, httpCode, err
 	}
-	err = bcrypt.CompareHashAndPassword([]byte(inputUser.Password), []byte(dbUser.Password))
+	err = bcrypt.CompareHashAndPassword([]byte(outputUser.Password), []byte(inputUser.Password))
 	if err != nil {
 		return domain.User{}, http.StatusBadRequest, err
 	}
-	return dbUser, http.StatusOK, nil
+	return outputUser, http.StatusOK, nil
 }
 
 func (svc *UserServiceV1) SearchOrCreateUserByPhoneNumber(ctx context.Context, phoneNumber string) (user domain.User, httpCode int, err error) {
