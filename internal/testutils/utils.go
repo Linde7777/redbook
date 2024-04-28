@@ -16,8 +16,7 @@ func GenEncryptedPassword(password string) string {
 }
 
 func GenHTTPJSONReq(method, url string, reqStruct any) *http.Request {
-	req, err := http.NewRequest("POST", "/v1/user/send-login-sms-auth-code",
-		structToHTTPBody(reqStruct))
+	req, err := http.NewRequest(method, url, structToHTTPBody(reqStruct))
 	if err != nil {
 		panic(err)
 	}
