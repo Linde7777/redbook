@@ -22,7 +22,7 @@ func TestRedisUserCache_GetUserByEmail(t *testing.T) {
 		{
 			name: "成功",
 			mock: func(ctrl *gomock.Controller) redis.Cmdable {
-				mockCmdable := NewMockCmdable(ctrl)
+				mockCmdable := testutils.NewMockCmdable(ctrl)
 				mockCMD := redis.NewStringCmd(context.Background())
 				mockCMD.SetErr(nil)
 				mockCMD.SetVal(testutils.StructToString(domain.User{

@@ -6,6 +6,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
+	"main/internal/testutils"
 	"net/http"
 	"testing"
 )
@@ -28,7 +29,7 @@ func TestRedisAuthCodeCache_Set(t *testing.T) {
 		{
 			name: "成功",
 			mock: func(ctrl *gomock.Controller) redis.Cmdable {
-				mockCmdable := NewMockCmdable(ctrl)
+				mockCmdable := testutils.NewMockCmdable(ctrl)
 				mockCmd := redis.NewCmd(context.Background())
 				mockCmd.SetErr(nil)
 
