@@ -33,7 +33,12 @@ func InitGinMiddlewares() []gin.HandlerFunc {
 
 		func(context *gin.Context) {
 			builder := middlewares.NewLoginMiddlewareBuilder()
-			builder.CheckLogin()(context)
+
+			// builder.Build()返回的是一个gin.HandlerFunc
+			// gin.HandlerFunc接受一个*gin.Context参数
+			// 等效于gin.HandlerFunc(context)
+			builder.Build()(context)
+
 			builder.IgnorePath("/v1/user/signup",
 				"/v1/user/login-by-password", "v1/user/send-login-sms-auth-code",
 				"v1/user/login-by-sms-auth-code")

@@ -46,7 +46,7 @@ func main() {
 //	builder.IgnorePath("/v1/user/signup",
 //		"/v1/user/login-by-password", "v1/user/send-login-sms-auth-code",
 //		"v1/user/login-by-sms-auth-code")
-//	router.Use(builder.CheckLogin())
+//	router.Use(builder.Build())
 //
 //	return router
 //}

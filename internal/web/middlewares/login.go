@@ -30,7 +30,7 @@ const (
 	KeyBackendJWTHeader = "X-JWT-Token"
 )
 
-func (b *LoginMiddlewareBuilder) CheckLogin() gin.HandlerFunc {
+func (b *LoginMiddlewareBuilder) Build() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		path := c.Request.URL.Path
 		if _, ok := b.ignoredPaths[path]; ok {
