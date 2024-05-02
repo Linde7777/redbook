@@ -47,34 +47,42 @@ func (c *RedisAuthCodeCache) HasExceedSendLimitError() bool {
 // 正常用户受到前端限制，不可能在一分钟内请求发送多次验证码，
 // 我们需要对攻击者隐藏这个错误，增加攻击者成本
 func (c *RedisAuthCodeCache) Set(ctx context.Context, businessName, phoneNumber, authCode string) (httpCode int, err error) {
-	res, err := c.cmd.Eval(ctx, luaSetCode, []string{c.Key(businessName, phoneNumber)}, authCode).Int()
+	res := c.cmd.Eval(ctx, luaSetCode, []string{c.Key(businessName, phoneNumber)}, authCode).String()
 	if err != nil {
 		return http.StatusInternalServerError, err
 	}
 	switch res {
-	case 100:
+	case "err no expire":
 		return http.StatusInternalServerError, errors.New("验证码key存在，但无过期时间")
-	case 200:
+	case "err exceed send limit":
 		// todo: zap error
 		fmt.Println(errExceedSendLimit)
 		errSentinel = errExceedSendLimit
 		return http.StatusOK, nil
-	default:
+	case "ok":
 		return http.StatusOK, nil
+	default:
+		// 不要把错误暴露给调用者，调用者可能会不小心返回给前端
+		fmt.Println("未知错误，检查lua脚本！")
+		return http.StatusInternalServerError, errors.New("未知错误，请查看日志")
 	}
 }
 
 func (c *RedisAuthCodeCache) Verify(ctx context.Context, businessName, phoneNumber, authCode string) (httpCode int, err error) {
-	res, err := c.cmd.Eval(ctx, luaVerifyCode, []string{c.Key(businessName, phoneNumber)}, authCode).Int()
+	res := c.cmd.Eval(ctx, luaVerifyCode, []string{c.Key(businessName, phoneNumber)}, authCode).String()
 	if err != nil {
 		return http.StatusInternalServerError, err
 	}
 	switch res {
-	case 300:
+	case "err exceed verify limit":
 		return http.StatusBadRequest, errors.New("验证次数耗尽，请重新获取验证码")
-	case 400:
+	case "err auth code not match":
 		return http.StatusBadRequest, errors.New("验证码不匹配，请重新输入")
-	default:
+	case "ok":
 		return http.StatusOK, nil
+	default:
+		// 不要把错误暴露给调用者，调用者可能会不小心返回给前端
+		fmt.Println("未知错误，检查lua脚本！")
+		return http.StatusInternalServerError, errors.New("未知错误，请查看日志")
 	}
 }
