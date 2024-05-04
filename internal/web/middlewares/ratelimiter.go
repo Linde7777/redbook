@@ -8,12 +8,11 @@ import (
 )
 
 type LimiterBuilder interface {
-	// Limit 返回true即触发限流
+	// limit 返回true即触发限流
 	limit(ctx *gin.Context, key string) (bool, error)
 	Build() gin.HandlerFunc
 }
 
-// RedisSlidWinLimiterBuilder 是基于Redis的滑动窗口限流器
 type RedisSlidWinLimiterBuilder struct {
 	cmd        redis.Cmdable
 	keyFunc    func(ctx *gin.Context) string
@@ -24,7 +23,7 @@ type RedisSlidWinLimiterBuilder struct {
 var _ LimiterBuilder = &RedisSlidWinLimiterBuilder{}
 
 // NewRedisSlidingWindowsLimiterBuilder
-// 会创建一个基于Redis的集群限流器。
+// 会创建一个基于Redis的滑动窗口集群限流器。
 // 创建一个ip限流器，参数keyFunc示例:
 //
 //	keyFunc = func(ctx *gin.Context) string {
