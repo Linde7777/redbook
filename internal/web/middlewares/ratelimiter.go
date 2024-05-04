@@ -3,62 +3,30 @@ package middlewares
 import (
 	_ "embed"
 	"github.com/gin-gonic/gin"
-	"github.com/redis/go-redis/v9"
+	"main/pkg/ratelimiter"
 	"net/http"
 )
 
-type LimiterBuilder interface {
-	// limit 返回true即触发限流
-	limit(ctx *gin.Context, key string) (bool, error)
-	Build() gin.HandlerFunc
+type RateLimiterMiddlewareBuilder struct {
+	limiter    ratelimiter.RateLimiter
+	keyGenFunc func(ctx *gin.Context) string
 }
-
-type RedisSlidWinLimiterBuilder struct {
-	cmd        redis.Cmdable
-	keyFunc    func(ctx *gin.Context) string
-	threshold  int
-	windowSize int
-}
-
-var _ LimiterBuilder = &RedisSlidWinLimiterBuilder{}
 
 // NewRedisSlidingWindowsLimiterBuilder
 // 会创建一个基于Redis的滑动窗口集群限流器。
-// 创建一个ip限流器，参数keyFunc示例:
+// 创建一个ip限流器，参数keyGenFunc示例:
 //
-//	keyFunc = func(ctx *gin.Context) string {
-//		return fmt.Sprintf("ip-limiter:%s", ctx.ClientIP())
+//	keyGenFunc = func(ctx *gin.Context) string {
+//		return fmt.Sprintf("ip-ratelimiter:%s", ctx.ClientIP())
 //	}
-func NewRedisSlidingWindowsLimiterBuilder(cmd redis.Cmdable,
-	threshold, windowSize int, keyFunc func(ctx *gin.Context) string) LimiterBuilder {
-	if keyFunc == nil {
-		panic("keyFunc is nil")
-	}
-
-	return &RedisSlidWinLimiterBuilder{
-		cmd:        cmd,
-		keyFunc:    keyFunc,
-		threshold:  threshold,
-		windowSize: windowSize,
-	}
+func NewRedisSlidingWindowsLimiterBuilder(limiter ratelimiter.RateLimiter, keyGenFunc func(ctx *gin.Context) string) RateLimiterMiddlewareBuilder {
+	return NewRedisSlidingWindowsLimiterBuilder(limiter, keyGenFunc)
 }
 
-//go:embed ratelimiter.lua
-var luascript string
-
-func (l *RedisSlidWinLimiterBuilder) limit(ctx *gin.Context, key string) (bool, error) {
-	res, err := l.cmd.Eval(ctx, luascript, []string{key}, l.threshold, l.windowSize).Bool()
-	if err != nil {
-		// todo: 启动单机限流
-		return false, err
-	}
-	return res, nil
-}
-
-func (l *RedisSlidWinLimiterBuilder) Build() gin.HandlerFunc {
+func (l *RateLimiterMiddlewareBuilder) Build() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		key := l.keyFunc(ctx)
-		if limit, err := l.limit(ctx, key); err != nil {
+		key := l.keyGenFunc(ctx)
+		if limit, err := l.limiter.Limit(ctx, key); err != nil {
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		} else if limit {
