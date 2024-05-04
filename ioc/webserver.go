@@ -3,6 +3,7 @@ package ioc
 import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 	"main/internal/web"
 	"main/internal/web/middlewares"
 	"strings"
@@ -17,8 +18,13 @@ func InitGinWebServer(middlewares []gin.HandlerFunc, userHandler *web.UserHandle
 	return server
 }
 
-func InitGinMiddlewares() []gin.HandlerFunc {
+func InitGinMiddlewares(redisCmd redis.Cmdable) []gin.HandlerFunc {
 	return []gin.HandlerFunc{
+		func(context *gin.Context) {
+			builder := middlewares.NewRedisSlidingWindowsLimiterBuilder(redisCmd, 10, 60, nil)
+			builder.Build()(context)
+		},
+
 		cors.New(cors.Config{
 			AllowHeaders:  []string{"Content-Type", "Authorization"},
 			ExposeHeaders: []string{middlewares.KeyBackendJWTHeader},

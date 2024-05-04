@@ -19,10 +19,10 @@ import (
 // Injectors from wire.go:
 
 func InitWebServer() *gin.Engine {
-	v := ioc.InitGinMiddlewares()
+	cmdable := ioc.InitRedis()
+	v := ioc.InitGinMiddlewares(cmdable)
 	db := ioc.InitDB()
 	userDAO := dao.NewUserDAO(db)
-	cmdable := ioc.InitRedis()
 	userCache := cache.NewRedisUserCache(cmdable)
 	userRepository := repository.NewUserRepositoryWithCache(userDAO, userCache)
 	userService := service.NewUserServiceV1(userRepository)
