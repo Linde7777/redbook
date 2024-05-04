@@ -1,6 +1,7 @@
 package ioc
 
 import (
+	"fmt"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
@@ -21,7 +22,12 @@ func InitGinWebServer(middlewares []gin.HandlerFunc, userHandler *web.UserHandle
 func InitGinMiddlewares(redisCmd redis.Cmdable) []gin.HandlerFunc {
 	return []gin.HandlerFunc{
 		func(context *gin.Context) {
-			builder := middlewares.NewRedisSlidingWindowsLimiterBuilder(redisCmd, 10, 60, nil)
+			keyFunc := func(ctx *gin.Context) string {
+				return fmt.Sprintf("ip-limiter:%s", ctx.ClientIP())
+			}
+			builder := middlewares.
+				NewRedisSlidingWindowsLimiterBuilder(
+					redisCmd, 10, 60, keyFunc)
 			builder.Build()(context)
 		},
 

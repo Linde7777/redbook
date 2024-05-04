@@ -2,7 +2,6 @@ package middlewares
 
 import (
 	_ "embed"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
 	"net/http"
@@ -25,15 +24,18 @@ type RedisSlidWinLimiterBuilder struct {
 var _ LimiterBuilder = &RedisSlidWinLimiterBuilder{}
 
 // NewRedisSlidingWindowsLimiterBuilder
-// 创建一个基于Redis的集群限流器，如果keyFunc为nil，则默认使用IP作为key: "ip-limiter:ip"
+// 会创建一个基于Redis的集群限流器。
+// 创建一个ip限流器，参数keyFunc示例:
+//
+//	keyFunc = func(ctx *gin.Context) string {
+//		return fmt.Sprintf("ip-limiter:%s", ctx.ClientIP())
+//	}
 func NewRedisSlidingWindowsLimiterBuilder(cmd redis.Cmdable,
 	threshold, windowSize int, keyFunc func(ctx *gin.Context) string) LimiterBuilder {
-
 	if keyFunc == nil {
-		keyFunc = func(ctx *gin.Context) string {
-			return fmt.Sprintf("ip-limiter:%s", ctx.ClientIP())
-		}
+		panic("keyFunc is nil")
 	}
+
 	return &RedisSlidWinLimiterBuilder{
 		cmd:        cmd,
 		keyFunc:    keyFunc,
