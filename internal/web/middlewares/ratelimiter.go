@@ -12,40 +12,40 @@ type LimiterBuilder interface {
 	// Limit 返回true即触发限流
 	limit(ctx *gin.Context, key string) (bool, error)
 	Build() gin.HandlerFunc
-	SetLimitKeyFunc(func(ctx *gin.Context) string)
 }
 
-type RedisLimiterBuilder struct {
+// RedisSlidWinLimiterBuilder 是基于Redis的滑动窗口限流器
+type RedisSlidWinLimiterBuilder struct {
 	cmd        redis.Cmdable
 	keyFunc    func(ctx *gin.Context) string
 	threshold  int
 	windowSize int
 }
 
-var _ LimiterBuilder = &RedisLimiterBuilder{}
+var _ LimiterBuilder = &RedisSlidWinLimiterBuilder{}
 
-// 创建一个基于Redis的集群限流器，默认限制IP，如需要限制其他key，需使用
-func NewRedisLimiterBuilder(cmd redis.Cmdable,
-	threshold, windowSize int) LimiterBuilder {
+// NewRedisSlidingWindowsLimiterBuilder
+// 创建一个基于Redis的集群限流器，如果keyFunc为nil，则默认使用IP作为key: "ip-limiter:ip"
+func NewRedisSlidingWindowsLimiterBuilder(cmd redis.Cmdable,
+	threshold, windowSize int, keyFunc func(ctx *gin.Context) string) LimiterBuilder {
 
-	return &RedisLimiterBuilder{
-		cmd: cmd,
-		keyFunc: func(ctx *gin.Context) string {
+	if keyFunc == nil {
+		keyFunc = func(ctx *gin.Context) string {
 			return fmt.Sprintf("ip-limiter:%s", ctx.ClientIP())
-		},
+		}
+	}
+	return &RedisSlidWinLimiterBuilder{
+		cmd:        cmd,
+		keyFunc:    keyFunc,
 		threshold:  threshold,
 		windowSize: windowSize,
 	}
 }
 
-func (l *RedisLimiterBuilder) SetLimitKeyFunc(f func(ctx *gin.Context) string) {
-	l.keyFunc = f
-}
-
 //go:embed ratelimiter.lua
 var luascript string
 
-func (l *RedisLimiterBuilder) limit(ctx *gin.Context, key string) (bool, error) {
+func (l *RedisSlidWinLimiterBuilder) limit(ctx *gin.Context, key string) (bool, error) {
 	res, err := l.cmd.Eval(ctx, luascript, []string{key}, l.threshold, l.windowSize).Bool()
 	if err != nil {
 		// todo: 启动单机限流
@@ -54,7 +54,7 @@ func (l *RedisLimiterBuilder) limit(ctx *gin.Context, key string) (bool, error) 
 	return res, nil
 }
 
-func (l *RedisLimiterBuilder) Build() gin.HandlerFunc {
+func (l *RedisSlidWinLimiterBuilder) Build() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		key := l.keyFunc(ctx)
 		if limit, err := l.limit(ctx, key); err != nil {
