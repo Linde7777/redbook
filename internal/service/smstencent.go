@@ -1,4 +1,4 @@
-package tencent
+package service
 
 import (
 	"context"
@@ -7,16 +7,21 @@ import (
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/errors"
 	tencentSMS "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms/v20210111" // 引入sms
+	"main/pkg/ratelimiter"
 	"net/http"
 )
 
-type Service struct {
-	smsClient *tencentSMS.Client
-	appID     *string
-	signName  *string
+type TencentSMSServiceWithLimiter struct {
+	rateLimiter ratelimiter.RateLimiter
+	limitKey    string
+	smsClient   *tencentSMS.Client
+	appID       *string
+	signName    *string
 }
 
-// NewService 参数smsClient的创建参考 https://cloud.tencent.com/document/product/382/43199 ，或者谷歌“腾讯云 smsClient go”即可找到：
+// NewTencentSMSServiceWithLimiter
+// 参数limitKey示例: "tencent-sms-ratelimiter"
+// 参数smsClient的创建参考 https://cloud.tencent.com/document/product/382/43199 ，或者谷歌“腾讯云 smsClient go”即可找到：
 // /* 必要步骤：
 //
 //   - 实例化一个认证对象，入参需要传入腾讯云账户密钥对secretId，secretKey。
@@ -59,17 +64,27 @@ type Service struct {
 //
 //   - 第二个参数是地域信息，可以直接填写字符串ap-guangzhou，支持的地域列表参考 https://cloud.tencent.com/document/api/382/52071#.E5.9C.B0.E5.9F.9F.E5.88.97.E8.A1.A8 */
 //     client, _ := tencentSMS.NewClient(credential, "ap-guangzhou", cpf)
-func NewService(sms *tencentSMS.Client, appID, signature string) *Service {
-	return &Service{
-		smsClient: sms,
-		appID:     &appID,
-		signName:  &signature,
+func NewTencentSMSServiceWithLimiter(sms *tencentSMS.Client, appID,
+	signature string, limiter ratelimiter.RateLimiter, limitKey string) *TencentSMSServiceWithLimiter {
+	return &TencentSMSServiceWithLimiter{
+		rateLimiter: limiter,
+		limitKey:    limitKey,
+		smsClient:   sms,
+		appID:       &appID,
+		signName:    &signature,
 	}
 }
 
 // Send 改编自 https://cloud.tencent.com/document/product/382/43199，或者谷歌“腾讯云 smsClient go”即可找到
 // args 对应模板中的参数
-func (s *Service) Send(ctx context.Context, templateID string, args []string, phones ...string) (httpCode int, err error) {
+func (s *TencentSMSServiceWithLimiter) Send(ctx context.Context, templateID string, args []string, phones ...string) (httpCode int, err error) {
+	limit, err := s.rateLimiter.Limit(ctx, s.limitKey)
+	if err != nil {
+		return http.StatusInternalServerError, err
+	} else if limit {
+		return http.StatusTooManyRequests, fmt.Errorf("rate limit")
+
+	}
 
 	/* 实例化一个请求对象，根据调用的接口和实际情况，可以进一步设置请求参数
 	 * 您可以直接查询SDK源码确定接口有哪些属性可以设置

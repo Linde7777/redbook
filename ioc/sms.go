@@ -1,15 +1,16 @@
 package ioc
 
 import (
+	"github.com/redis/go-redis/v9"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/profile"
-	"main/internal/service/sms"
-	"main/internal/service/sms/tencent"
+	"main/internal/service"
+	"main/pkg/ratelimiter"
 
 	tencentSMS "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms/v20210111"
 )
 
-func InitSMSService() sms.Service {
+func InitSMSService(redisCmd redis.Cmdable) service.SMSService {
 	// SecretId、SecretKey 查询: https://console.cloud.tencent.com/cam/capi */
 	credential := common.NewCredential(
 		// os.Getenv("TENCENTCLOUD_SECRET_ID"),
@@ -42,5 +43,9 @@ func InitSMSService() sms.Service {
 
 	- 第二个参数是地域信息，可以直接填写字符串ap-guangzhou，支持的地域列表参考 https://cloud.tencent.com/document/api/382/52071#.E5.9C.B0.E5.9F.9F.E5.88.97.E8.A1.A8 */
 	client, _ := tencentSMS.NewClient(credential, "ap-guangzhou", cpf)
-	return tencent.NewService(client, "appID", "signature")
+
+	rateLimiter := ratelimiter.NewRedisSlidingWinLimiter(
+		redisCmd, 10, 60)
+	return service.NewTencentSMSServiceWithLimiter(client, "appID",
+		"signature", rateLimiter, "tencent-sms-ratelimiter")
 }

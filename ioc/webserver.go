@@ -7,6 +7,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"main/internal/web"
 	"main/internal/web/middlewares"
+	"main/pkg/ratelimiter"
 	"strings"
 	"time"
 )
@@ -19,15 +20,15 @@ func InitGinWebServer(middlewares []gin.HandlerFunc, userHandler *web.UserHandle
 	return server
 }
 
-func InitGinMiddlewares(redisCmd redis.Cmdable) []gin.HandlerFunc {
+func InitGinMiddlewares(cmdable redis.Cmdable) []gin.HandlerFunc {
 	return []gin.HandlerFunc{
 		func(context *gin.Context) {
 			keyFunc := func(ctx *gin.Context) string {
-				return fmt.Sprintf("ip-limiter:%s", ctx.ClientIP())
+				return fmt.Sprintf("ip-ratelimiter:%s", ctx.ClientIP())
 			}
+			limiter := ratelimiter.NewRedisSlidingWinLimiter(cmdable, 100, 1)
 			builder := middlewares.
-				NewRedisSlidingWindowsLimiterBuilder(
-					redisCmd, 10, 60, keyFunc)
+				NewRedisSlidingWindowsLimiterBuilder(limiter, keyFunc)
 			builder.Build()(context)
 		},
 

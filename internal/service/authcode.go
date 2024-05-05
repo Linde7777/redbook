@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"main/internal/repository"
-	"main/internal/service/sms"
 	"math/rand"
 )
 
@@ -15,11 +14,11 @@ type AuthCodeService interface {
 
 type AuthCodeServiceV1 struct {
 	repo repository.AuthCodeRepository
-	sms  sms.Service
+	sms  SMSService
 }
 
 // NewAuthCodeServiceV1 为了适配wire，只能返回接口，而不是返回具体实现
-func NewAuthCodeServiceV1(repo repository.AuthCodeRepository, sms sms.Service) AuthCodeService {
+func NewAuthCodeServiceV1(repo repository.AuthCodeRepository, sms SMSService) AuthCodeService {
 	return &AuthCodeServiceV1{
 		repo: repo,
 		sms:  sms,
