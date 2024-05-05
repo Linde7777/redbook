@@ -4,14 +4,13 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/profile"
-	"main/internal/service/sms"
-	"main/internal/service/sms/tencent"
+	"main/internal/service"
 	"main/pkg/ratelimiter"
 
 	tencentSMS "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms/v20210111"
 )
 
-func InitSMSService(redisCmd redis.Cmdable) sms.Service {
+func InitSMSService(redisCmd redis.Cmdable) service.SMSService {
 	// SecretId、SecretKey 查询: https://console.cloud.tencent.com/cam/capi */
 	credential := common.NewCredential(
 		// os.Getenv("TENCENTCLOUD_SECRET_ID"),
@@ -47,6 +46,6 @@ func InitSMSService(redisCmd redis.Cmdable) sms.Service {
 
 	rateLimiter := ratelimiter.NewRedisSlidingWinLimiter(
 		redisCmd, 10, 60)
-	return tencentsms.NewServiceWithLimiter(client, "appID",
+	return service.NewTencentSMSServiceWithLimiter(client, "appID",
 		"signature", rateLimiter, "tencent-sms-ratelimiter")
 }

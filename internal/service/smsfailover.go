@@ -1,27 +1,26 @@
-package failover
+package service
 
 import (
 	"context"
 	"errors"
-	"main/internal/service/sms"
 	"net/http"
 	"sync"
 	"sync/atomic"
 )
 
-type Service struct {
-	svcs        []sms.Service
+type FailOverService struct {
+	svcs        []SMSService
 	validSVCIdx int64
 	mu          sync.Mutex
 }
 
-var _ sms.Service = &Service{}
+var _ SMSService = &FailOverService{}
 
-func NewService(svcs ...sms.Service) *Service {
-	return &Service{svcs: svcs, validSVCIdx: 0}
+func NewFailOverService(svcs ...SMSService) *FailOverService {
+	return &FailOverService{svcs: svcs, validSVCIdx: 0}
 }
 
-func (s *Service) Send(ctx context.Context, templateID string,
+func (s *FailOverService) Send(ctx context.Context, templateID string,
 	args []string, phoneNumbers ...string) (httpCode int, err error) {
 
 	// 这段代码有bug，但是影响不大，写出无bug的实现，可读性不好，注释要写一大堆，不好维护，见下面的注释

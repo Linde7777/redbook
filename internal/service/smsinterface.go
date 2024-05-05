@@ -1,7 +1,7 @@
-package sms
+package service
 
 import "context"
 
-type Service interface {
+type SMSService interface {
 	Send(ctx context.Context, templateID string, args []string, phoneNumbers ...string) (httpCode int, err error)
 }
