@@ -16,6 +16,8 @@ type TimeoutFailOverSMSService struct {
 
 var _ SMSService = &TimeoutFailOverSMSService{}
 
+// NewTimeoutFailOverSMSService
+// 参数timeoutCountLimit表示所有goroutine(s)超时次数的限制
 func NewTimeoutFailOverSMSService(svcs []SMSService, timeoutCountLimit int64) *TimeoutFailOverSMSService {
 	return &TimeoutFailOverSMSService{
 		svcs:              svcs,
